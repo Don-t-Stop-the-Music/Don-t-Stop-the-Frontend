@@ -1,4 +1,4 @@
-lpackage com.dontstopthemusic.dontstopthemusic;
+package com.dontstopthemusic.dontstopthemusic;
 
 import android.os.Bundle;
 
