@@ -64,12 +64,6 @@ public class BluetoothActivity extends AppCompatActivity
 		/* Set up the content view */
 		setContentView ( R.layout.activity_bluetooth );
 
-		/* Get copies of the fragments */
-		currentDeviceFragment = ( DeviceListFragment ) getSupportFragmentManager ().findFragmentById ( R.id.currentDevice );
-
-		/* Get copies of the fragments */
-		otherDevicesFragment = ( DeviceListFragment ) getSupportFragmentManager ().findFragmentById ( R.id.otherDevices );
-
 		/* Check that classic bluetooth is supported on the device */
 		if ( !getPackageManager ().hasSystemFeature ( PackageManager.FEATURE_BLUETOOTH ) )
 		{
@@ -96,6 +90,18 @@ public class BluetoothActivity extends AppCompatActivity
 			finish ();
 			return;
 		}
+
+		/* Get copies of the fragments */
+		currentDeviceFragment = ( DeviceListFragment ) getSupportFragmentManager ().findFragmentById ( R.id.currentDevice );
+
+		/* Get copies of the fragments */
+		otherDevicesFragment = ( DeviceListFragment ) getSupportFragmentManager ().findFragmentById ( R.id.otherDevices );
+
+		/* Create a callback for clicking on a non-connected device */
+		otherDevicesFragment.setDeviceClickCallback ( device ->
+		{
+
+		} );
 	}
 
 
@@ -182,7 +188,9 @@ public class BluetoothActivity extends AppCompatActivity
 
 
 
-	/* A BroadcastReceiver for new Bluetooth devices */
+	/**
+	 * A BroadcastReceiver for new Bluetooth devices
+	 */
 	private class BluetoothDeviceReceiver extends BroadcastReceiver
 	{
 		/* Receiver method */
