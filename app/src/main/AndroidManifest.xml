@@ -34,9 +34,9 @@
         android:theme="@style/Theme.DontStopTheMusic"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name=".BluetoothActivity"
             android:exported="true"
-            android:label="@string/app_name"
+            android:label="Bluetooth Connect"
             android:theme="@style/Theme.DontStopTheMusic.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

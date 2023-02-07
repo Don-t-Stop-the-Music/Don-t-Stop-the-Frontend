@@ -33,6 +33,20 @@ public class DeviceListFragment extends ListFragment
 
 
 	/**
+	 * @param savedInstanceState If the fragment is being re-created from
+	 * a previous saved state, this is the state.
+	 */
+	@Override
+	public void onCreate ( @Nullable Bundle savedInstanceState )
+	{
+		/* Create the superclass */
+		super.onCreate ( savedInstanceState );
+
+		/* Create the list adapter */
+		mDeviceListAdapter = new DeviceListAdapter ();
+	}
+
+	/**
 	 *
 	 */
 	@Override
@@ -70,7 +84,7 @@ public class DeviceListFragment extends ListFragment
     /**
      * @return The number of devices in the list.
      */
-    public int getCount ()
+    public int getDeviceCount ()
     {
         return mDeviceListAdapter.getCount ();
     }
@@ -78,7 +92,7 @@ public class DeviceListFragment extends ListFragment
     /**
      * Remove all devices from the list.
      */
-    public void clear ()
+    public void clearDevices ()
     {
         mDeviceListAdapter.clear ();
         mDeviceListAdapter.notifyDataSetChanged ();

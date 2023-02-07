@@ -1,26 +1,66 @@
 package com.dontstopthemusic.dontstopthemusic;
 
+import static android.util.Log.println;
+
 import android.Manifest;
-import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
-public class BluetoothActivity extends Activity
+import java.security.Permission;
+
+public class BluetoothActivity extends AppCompatActivity
 {
-
-	/* Allows for scheduling of events */
-	Handler mHandler;
-
 	/* The bluetooth adapter */
-	BluetoothAdapter mBluetoothAdapter;
+	private BluetoothAdapter mBluetoothAdapter;
+
+	/* The current device fragment */
+	private DeviceListFragment currentDeviceFragment;
+
+	/* The list of other devices */
+	private DeviceListFragment otherDevicesFragment;
+
+	/* Whether bluetooth is currently scanning */
+	boolean mScanning;
+
+
+
+	/* Required permissions */
+	static final String[] requiredPermissions =
+		{
+				Manifest.permission.BLUETOOTH_CONNECT,
+				Manifest.permission.BLUETOOTH_SCAN,
+				Manifest.permission.ACCESS_FINE_LOCATION,
+				//Manifest.permission.ACCESS_COARSE_LOCATION,
+				//Manifest.permission.ACCESS_BACKGROUND_LOCATION
+		};
+
+
+
+
+	/* A BroadcastReceiver for new Bluetooth devices */
+	private final BroadcastReceiver mBluetoothReceiver = new BroadcastReceiver ()
+	{
+		@Override
+		public void onReceive ( Context context, Intent intent )
+		{
+			/* Check that this is actually a new device broadcast */
+			if ( BluetoothDevice.ACTION_FOUND.equals ( intent.getAction () ) )
+				otherDevicesFragment.addDevice ( intent.getParcelableExtra ( BluetoothDevice.EXTRA_DEVICE ) );
+		}
+	};
+
 
 	/**
 	 * @param savedInstanceState If the fragment is being re-created from
@@ -29,8 +69,17 @@ public class BluetoothActivity extends Activity
 	@Override
 	public void onCreate ( Bundle savedInstanceState )
 	{
+		/* Create the superclass */
 		super.onCreate ( savedInstanceState );
-		mHandler = new Handler ();
+
+		/* Set up the content view */
+		setContentView ( R.layout.activity_bluetooth );
+
+		/* Get copies of the fragments */
+		currentDeviceFragment = ( DeviceListFragment ) getSupportFragmentManager ().findFragmentById ( R.id.currentDevice );
+
+		/* Get copies of the fragments */
+		otherDevicesFragment = ( DeviceListFragment ) getSupportFragmentManager ().findFragmentById ( R.id.otherDevices );
 
 		/* Check that classic bluetooth is supported on the device */
 		if ( !getPackageManager ().hasSystemFeature ( PackageManager.FEATURE_BLUETOOTH ) )
@@ -41,12 +90,8 @@ public class BluetoothActivity extends Activity
 		}
 
 		/* Check permissions */
-		if ( ActivityCompat.checkSelfPermission ( this, Manifest.permission.BLUETOOTH_CONNECT ) != PackageManager.PERMISSION_GRANTED )
-		{
-			Toast.makeText ( this, R.string.no_bluetooth_permissions, Toast.LENGTH_SHORT ).show ();
-			finish ();
-			return;
-		}
+		if ( !checkBluetoothPermissions () )
+			requestBluetoothPermissions ();
 
 		/* Initializes the Bluetooth adapter. For API level 18 and above, get a reference to
 		 * BluetoothAdapter through BluetoothManager.
@@ -75,14 +120,75 @@ public class BluetoothActivity extends Activity
 		/* Resume the superclass */
 		super.onResume ();
 
+		/* Clear the list of other devices */
+		otherDevicesFragment.clearDevices ();
+
 		/* Ensure Bluetooth is enabled on the device.
 		 * If Bluetooth is not currently enabled, fire an intent to display a dialog asking the user to grant permission to enable it.
 		 */
 		if ( !mBluetoothAdapter.isEnabled () )
 		{
-			Intent enableBtIntent = new Intent ( BluetoothAdapter.ACTION_REQUEST_ENABLE );
-			startActivityForResult ( enableBtIntent, 1 );
+			throw new SecurityException ( "Bluetooth is disabled and the a request is not yet implemented!" );
+			//Intent enableBtIntent = new Intent ( BluetoothAdapter.ACTION_REQUEST_ENABLE );
+			//startActivityForResult ( enableBtIntent, 1 );
 		}
+
+		/* Check permissions */
+		if ( !checkBluetoothPermissions () )
+			requestBluetoothPermissions ();
+
+		/* Scan! */
+		scanForDevices ( true );
+	}
+
+
+
+	/**
+	 * @param enable Whether to enable or disable bluetooth scanning
+	 */
+	private void scanForDevices ( final boolean enable ) throws SecurityException
+	{
+		if ( checkBluetoothPermissions () )
+			if ( enable && !mScanning )
+			{
+				/* Register the Bluetooth receiver */
+				IntentFilter filter = new IntentFilter ( BluetoothDevice.ACTION_FOUND );
+				registerReceiver ( mBluetoothReceiver, filter );
+
+				/* Start scanning */
+				mScanning = true;
+				mBluetoothAdapter.startDiscovery ();
+			}
+
+			else if ( !enable && mScanning )
+			{
+				/* Stop scanning */
+				mScanning = false;
+				mBluetoothAdapter.cancelDiscovery ();
+
+				/* Unregister the receiver */
+				unregisterReceiver ( mBluetoothReceiver );
+			}
+	}
+
+
+	/**
+	 * @return True iff permissions have already been granted.
+	 */
+	private boolean checkBluetoothPermissions ()
+	{
+		boolean granted = true;
+		for ( String p : requiredPermissions  )
+			granted &= ActivityCompat.checkSelfPermission ( this, p ) == PackageManager.PERMISSION_GRANTED;
+		return granted;
+	}
+
+	/**
+	 *
+	 */
+	private void requestBluetoothPermissions ()
+	{
+		ActivityCompat.requestPermissions ( BluetoothActivity.this, requiredPermissions, 2 );
 	}
 
 }
