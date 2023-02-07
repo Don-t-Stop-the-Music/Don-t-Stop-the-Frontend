@@ -31,6 +31,9 @@ public class BluetoothActivity extends AppCompatActivity
 	/* The list of other devices */
 	private DeviceListFragment otherDevicesFragment;
 
+	/* The bluetooth device receiver */
+	private BluetoothDeviceReceiver mBluetoothReceiver = new BluetoothDeviceReceiver ();
+
 	/* Whether bluetooth is currently scanning */
 	boolean mScanning;
 
@@ -46,20 +49,6 @@ public class BluetoothActivity extends AppCompatActivity
 				//Manifest.permission.ACCESS_BACKGROUND_LOCATION
 		};
 
-
-
-
-	/* A BroadcastReceiver for new Bluetooth devices */
-	private final BroadcastReceiver mBluetoothReceiver = new BroadcastReceiver ()
-	{
-		@Override
-		public void onReceive ( Context context, Intent intent )
-		{
-			/* Check that this is actually a new device broadcast */
-			if ( BluetoothDevice.ACTION_FOUND.equals ( intent.getAction () ) )
-				otherDevicesFragment.addDevice ( intent.getParcelableExtra ( BluetoothDevice.EXTRA_DEVICE ) );
-		}
-	};
 
 
 	/**
@@ -191,4 +180,28 @@ public class BluetoothActivity extends AppCompatActivity
 		ActivityCompat.requestPermissions ( BluetoothActivity.this, requiredPermissions, 2 );
 	}
 
-}
+
+
+	/* A BroadcastReceiver for new Bluetooth devices */
+	private class BluetoothDeviceReceiver extends BroadcastReceiver
+	{
+		/* Receiver method */
+		@Override
+		public void onReceive ( Context context, Intent intent )
+		{
+			/* Check that this is actually a new device broadcast */
+			if ( BluetoothDevice.ACTION_FOUND.equals ( intent.getAction () ) )
+			{
+				BluetoothDevice device = intent.getParcelableExtra ( BluetoothDevice.EXTRA_DEVICE );
+				if ( filterDevice ( device ) )
+					otherDevicesFragment.addDevice ( device );
+			}
+		}
+
+		/* Filter out certain devices */
+		private boolean filterDevice ( BluetoothDevice device ) throws SecurityException
+		{
+			return device.getName () != null;
+		}
+	};
+};
