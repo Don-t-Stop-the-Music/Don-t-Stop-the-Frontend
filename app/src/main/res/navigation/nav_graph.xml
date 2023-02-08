@@ -24,5 +24,23 @@
         <action
             android:id="@+id/action_SecondFragment_to_FirstFragment"
             app:destination="@id/FirstFragment" />
+        <action
+            android:id="@+id/action_SecondFragment_to_ThirdFragment"
+            app:destination="@id/ThirdFragment" />
     </fragment>
+    <fragment
+        android:id="@+id/ThirdFragment"
+        android:name="com.dontstopthemusic.dontstopthemusic.ThirdFragment"
+        android:label="@string/third_fragment_label"
+        tools:layout="@layout/fragment_third">
+        <action
+            android:id="@+id/action_ThirdFragment_to_SecondFragment"
+            app:destination="@id/SecondFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/HelpFragment"
+        android:name="com.dontstopthemusic.dontstopthemusic.HelpFragment"
+        android:label="@string/Help_button"
+        tools:layout="@layout/fragment_help" />
+    <!--ID has to be same as item id-->
 </navigation>

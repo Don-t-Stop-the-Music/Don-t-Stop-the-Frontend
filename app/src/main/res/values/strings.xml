@@ -2,11 +2,19 @@
     <string name="app_name">Don\'t Stop The Music</string>
     <string name="action_settings">Settings</string>
     <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">First Fragment</string>
-    <string name="second_fragment_label">Second Fragment</string>
+    <string name="first_fragment_label">Bluetooth </string>
+    <string name="second_fragment_label">RPi </string>
+    <string name="third_fragment_label"> Homepage</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
 
-    <string name="hello_first_fragment">Hello first fragment</string>
-    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="Bluetooth_connection">Bluetooth connection page </string>
+    <string name="RPi_connection">RPi connection page </string>
+    <string name="Homepage"> Homepage </string>
+    <string name="Help_button"> Help </string>
+
+    <string name="Debug_feedback"> Debug feedback </string>
+    <string name="Debug_silence"> Debug silence </string>
+    <string name="Debug_hiss"> Debug hiss </string>
+
 </resources>
