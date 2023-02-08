@@ -26,10 +26,10 @@ public class BluetoothActivity extends AppCompatActivity
 	private BluetoothAdapter mBluetoothAdapter;
 
 	/* The current device fragment */
-	private DeviceListFragment mCurrentDeviceFragment;
+	private SimpleDeviceListFragment mCurrentDevicesFragment;
 
 	/* The list of other devices */
-	private DeviceListFragment mOtherDevicesFragment;
+	private SimpleDeviceListFragment mOtherDevicesFragment;
 
 	/* The bluetooth device receiver */
 	private final BluetoothDeviceReceiver mBluetoothReceiver = new BluetoothDeviceReceiver ();
@@ -102,10 +102,10 @@ public class BluetoothActivity extends AppCompatActivity
 		}
 
 		/* Get copies of the fragments */
-		mCurrentDeviceFragment = ( DeviceListFragment ) getSupportFragmentManager ().findFragmentById ( R.id.currentDevice );
+		mCurrentDevicesFragment = ( SimpleDeviceListFragment ) getSupportFragmentManager ().findFragmentById ( R.id.currentDevice );
 
 		/* Get copies of the fragments */
-		mOtherDevicesFragment = ( DeviceListFragment ) getSupportFragmentManager ().findFragmentById ( R.id.otherDevices );
+		mOtherDevicesFragment = ( SimpleDeviceListFragment ) getSupportFragmentManager ().findFragmentById ( R.id.otherDevices );
 
 		/* Create a callback for clicking on a non-connected device */
 		mOtherDevicesFragment.setDeviceClickCallback ( device ->
@@ -162,7 +162,7 @@ public class BluetoothActivity extends AppCompatActivity
 			if ( !device.isConnected () && !device.isConnecting () )
 			{
 				device.unregisterStatusChangeCallback ( mDeviceStatusChangeCallback );
-				mCurrentDeviceFragment.removeDevice ( device );
+				mCurrentDevicesFragment.removeDevice ( device );
 				mOtherDevicesFragment.removeDevice ( device );
 				return true;
 			} else return false;
@@ -267,11 +267,11 @@ public class BluetoothActivity extends AppCompatActivity
 			if ( device.isConnecting () || device.isConnected () )
 			{
 				mOtherDevicesFragment.removeDevice ( device );
-				mCurrentDeviceFragment.addDevice ( device );
+				mCurrentDevicesFragment.addDevice ( device );
 			} else
 			{
 				mOtherDevicesFragment.addDevice ( device );
-				mCurrentDeviceFragment.removeDevice ( device );
+				mCurrentDevicesFragment.removeDevice ( device );
 			}
 		}
 	}

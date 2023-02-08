@@ -12,7 +12,7 @@
     <string name="unknown_device">Unknown Device</string>
     <string name="bluetooth_not_supported">Bluetooth not supported</string>
     <string name="no_bluetooth_permissions">Bluetooth permissions not granted</string>
-    <string name="current_device">Current Device</string>
+    <string name="current_device">Current Devices</string>
     <string name="other_devices">Other Devices</string>
     <string name="enable_bluetooth">Please enable Bluetooth</string>
 </resources>

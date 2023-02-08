@@ -6,22 +6,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.ListFragment;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Iterator;
-import java.util.stream.IntStream;
 
 
 /**
  * Visually displays some provided list of Device instances.
  */
-public class DeviceListFragment extends ListFragment
+public abstract class BaseDeviceListFragment extends ListFragment
 {
 
 	/* An instance of the list adapter */
@@ -29,9 +26,6 @@ public class DeviceListFragment extends ListFragment
 
 	/* The device click callback */
 	private DeviceClickCallback mDeviceClickCallback;
-
-	/* Whether or not to show the connection status of devices */
-	private boolean mShowConnectionStatus = false;
 
 	/* The callback passed to devices to allow them to refresh the list */
 	private final Device.DeviceStatusChangeCallback mDeviceStatusChangeCallback =
@@ -73,22 +67,11 @@ public class DeviceListFragment extends ListFragment
 	 * @param callback A new callback for a clicked device (may be null).
 	 * @return The old callback.
 	 */
-	public DeviceClickCallback setDeviceClickCallback ( @Nullable DeviceClickCallback callback )
+	public DeviceClickCallback registerDeviceClickCallback ( @Nullable DeviceClickCallback callback )
 	{
 		DeviceClickCallback old = mDeviceClickCallback;
 		mDeviceClickCallback = callback;
 		return old;
-	}
-
-
-	/**
-	 * @param show Whether the list should show the connection status of its elements
-	 */
-	public void setShowConnectionStatus ( boolean show )
-	{
-		boolean change = mShowConnectionStatus != show;
-		mShowConnectionStatus = show;
-		mDeviceListAdapter.notifyDataSetChanged ();
 	}
 
 
@@ -213,7 +196,7 @@ public class DeviceListFragment extends ListFragment
 
 			/* Initialise members */
 			mDevices = new ArrayList<> ();
-			mInflator = DeviceListFragment.this.getLayoutInflater ();
+			mInflator = BaseDeviceListFragment.this.getLayoutInflater ();
 		}
 
 
@@ -293,62 +276,29 @@ public class DeviceListFragment extends ListFragment
 		@Override
 		public View getView ( int i, @Nullable View view, ViewGroup viewGroup )
 		{
-			ViewParams viewParams;
-
 			/* Create a new view if it does not exist already */
 			if ( view == null )
-			{
-				view = mInflator.inflate ( R.layout.listitem_device, null );
-				viewParams = new ViewParams (
-						view.findViewById ( R.id.device_name ),
-						view.findViewById ( R.id.device_address ) );
-				view.setTag ( viewParams );
-			} else
-				/* Else get the existing view */
-				viewParams = ( ViewParams ) view.getTag ();
+				view = mInflator.inflate ( getListItemLayout (), null );
 
 			/* Update the view */
-			viewParams.updateText ( mDevices.get ( i ) );
-
+			updateListItemView ( view, mDevices.get ( i ) );
 			return view;
 		}
 	}
 
 
+
 	/**
-	 * A class to store the modifiable parts of a view.
+	 * @return The identifier for the layout to use for views.
 	 */
-	static private class ViewParams
-	{
-		TextView deviceName, deviceAddress;
+	protected abstract int getListItemLayout ();
 
-		/**
-		 * Default constructor
-		 *
-		 * @param deviceName    The TextView that stores the device's name.
-		 * @param deviceAddress The TextView that stores the device's address.
-		 */
-		public ViewParams ( TextView deviceName, TextView deviceAddress )
-		{
-			this.deviceName = deviceName;
-			this.deviceAddress = deviceAddress;
-		}
+	/**
+	 * @param view The view to update.
+	 * @param device The device to update the view to.
+	 */
+	protected abstract void updateListItemView ( View view, Device device ) throws SecurityException;
 
-		/**
-		 * Update the text of a list view with the parameters of a given device
-		 *
-		 * @param device The device with which to update the view's name and address
-		 */
-		public void updateText ( Device device ) throws SecurityException
-		{
-			final String name = device.getInfo ().getName ();
-			if ( name != null && name.length () > 0 )
-				this.deviceName.setText ( name );
-			else
-				this.deviceName.setText ( R.string.unknown_device );
-			this.deviceAddress.setText ( device.getInfo ().getAddress () );
-		}
-	}
 
 
 	/**
