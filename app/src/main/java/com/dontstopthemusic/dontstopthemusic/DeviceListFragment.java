@@ -114,13 +114,16 @@ public class DeviceListFragment extends ListFragment
 
 	/**
 	 * @param device Add/update the entry for this device.
-	 * @return The index of the added device.
+	 * @return Whether the device was newly added.
 	 */
-	public int addDevice ( Device device )
+	public boolean addDevice ( Device device )
 	{
-		int index = mDeviceListAdapter.addItem ( device );
+		boolean added = mDeviceListAdapter.addItem ( device );
+		/* Note that we consider the possibility that the device has changed state,
+		 * so we always notify that the dataset has changed.
+		 */
 		mDeviceListAdapter.notifyDataSetChanged ();
-		return index;
+		return added;
 	}
 
 	/**
@@ -130,22 +133,22 @@ public class DeviceListFragment extends ListFragment
 	public boolean removeDevice ( Device device )
 	{
 		boolean removed = mDeviceListAdapter.removeItem ( device );
-		mDeviceListAdapter.notifyDataSetChanged ();
+		if ( removed )
+			mDeviceListAdapter.notifyDataSetChanged ();
 		return removed;
 	}
 
     /**
      * @param devices Add/update the entry for many devices.
-	 * @return The indices of the added devices.
      */
-    public int[] addDevices ( Iterable<Device> devices )
+    public void addDevices ( Iterable<Device> devices )
     {
 		/* Add all of the indices to a list */
-		ArrayList<Integer> indices = new ArrayList<> ();
+		boolean added = false;
         for ( Device device : devices )
-            indices.add ( mDeviceListAdapter.addItem ( device ) );
-        mDeviceListAdapter.notifyDataSetChanged ();
-		return indices.stream().mapToInt ( Integer::intValue ).toArray ();
+			added |= mDeviceListAdapter.addItem ( device );
+		if ( added )
+			mDeviceListAdapter.notifyDataSetChanged ();
     }
 
     /**
@@ -156,7 +159,6 @@ public class DeviceListFragment extends ListFragment
         mDeviceListAdapter.clear ();
         mDeviceListAdapter.notifyDataSetChanged ();
     }
-
 
 	/**
 	 * Force the list to update.
@@ -199,9 +201,6 @@ public class DeviceListFragment extends ListFragment
 		/* An inflator for the fragment */
 		private final LayoutInflater mInflator;
 
-		/* A comparator for devices */
-		private final DeviceComparator deviceComparator = new DeviceComparator ();
-
 
 
 		/**
@@ -229,31 +228,14 @@ public class DeviceListFragment extends ListFragment
         }
 
         /**
-		 * @param device The device to add/update in the list.
-		 * @return The index of the added device.
+		 * @param device Whether the device was newly added.
 		 */
-		public int addItem ( Device device )
+		public boolean addItem ( Device device )
 		{
-			/* Try to find a matching device */
-			int index = IntStream.range ( 0, mDevices.size () )
-					.filter ( i -> deviceComparator.compare ( mDevices.get ( i ), device ) == 0 )
-					.findFirst ()
-					.orElse ( mDevices.size () );
-
-			/* Either add a new device, or modify the existing one */
-			if ( index == mDevices.size () )
-				mDevices.add ( device );
+			if ( !mDevices.contains ( device ) )
+				return mDevices.add ( device );
 			else
-			{
-				mDevices.get ( index ).unregisterStatusChangeCallback ( mDeviceStatusChangeCallback );
-				mDevices.set ( index, device );
-			}
-
-			/* Register the status change callback */
-			device.registerStatusChangeCallback ( mDeviceStatusChangeCallback );
-
-			/* Return the index of the device */
-			return index;
+				return false;
 		}
 
 		/**
@@ -262,7 +244,7 @@ public class DeviceListFragment extends ListFragment
 		 */
 		public boolean removeItem ( Device device )
 		{
-			return mDevices.removeIf ( d -> deviceComparator.compare ( d, device ) == 0 );
+			return mDevices.remove ( device );
 		}
 
 		/**
@@ -365,38 +347,6 @@ public class DeviceListFragment extends ListFragment
 			else
 				this.deviceName.setText ( R.string.unknown_device );
 			this.deviceAddress.setText ( device.getInfo ().getAddress () );
-		}
-	}
-
-
-	/**
-	 * A comparator over MAC addresses of devices.
-	 */
-	static private class DeviceComparator implements Comparator<Device>
-	{
-		/**
-		 * @param d1 The first device
-		 * @param d2 The second device
-		 * @return The comparison of the MAC addresses of devices.
-		 */
-		@Override
-		public int compare ( Device d1, Device d2 )
-		{
-			long cmp = addressToInt ( d1.getInfo ().getAddress () ) - addressToInt ( d2.getInfo ().getAddress () );
-			return cmp < 0 ? -1 : ( cmp > 0 ? 1 : 0 );
-		}
-
-		/**
-		 * @param address A MAC address of the form AA:BB:CC:DD:EE:FF
-		 * @return An integer representation.
-		 */
-		private long addressToInt ( String address )
-		{
-			long result = 0;
-			String[] bytes = address.split ( ":" );
-			for ( String b : bytes )
-				result = result * 16 + Long.parseLong ( b, 16 );
-			return result;
 		}
 	}
 

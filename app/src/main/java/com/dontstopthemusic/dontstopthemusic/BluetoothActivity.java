@@ -1,7 +1,5 @@
 package com.dontstopthemusic.dontstopthemusic;
 
-import static android.util.Log.println;
-
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -12,13 +10,15 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
-import java.security.Permission;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.UUID;
+import java.util.stream.IntStream;
 
 public class BluetoothActivity extends AppCompatActivity
 {
@@ -26,21 +26,31 @@ public class BluetoothActivity extends AppCompatActivity
 	private BluetoothAdapter mBluetoothAdapter;
 
 	/* The current device fragment */
-	private DeviceListFragment currentDeviceFragment;
+	private DeviceListFragment mCurrentDeviceFragment;
 
 	/* The list of other devices */
-	private DeviceListFragment otherDevicesFragment;
+	private DeviceListFragment mOtherDevicesFragment;
 
 	/* The bluetooth device receiver */
-	private BluetoothDeviceReceiver mBluetoothReceiver = new BluetoothDeviceReceiver ();
+	private final BluetoothDeviceReceiver mBluetoothReceiver = new BluetoothDeviceReceiver ();
+
+	private final DeviceStatusChangeCallback mDeviceStatusChangeCallback = new DeviceStatusChangeCallback ();
+
+	/* The list of known devices */
+	private final ArrayList<Device> mKnownDevices = new ArrayList<> ();
+
+	/* A comparator for devices */
+	private final DeviceComparator mDeviceComparator = new DeviceComparator ();
 
 	/* Whether bluetooth is currently scanning */
 	boolean mScanning;
 
 
 
+	static final UUID BASE_UUID = UUID.fromString ( "00000000-0000-1000-8000-00805F9B34F" );
+
 	/* Required permissions */
-	static final String[] requiredPermissions =
+	static final String[] REQUIRED_PERMISSIONS =
 		{
 				Manifest.permission.BLUETOOTH_CONNECT,
 				Manifest.permission.BLUETOOTH_SCAN,
@@ -92,15 +102,16 @@ public class BluetoothActivity extends AppCompatActivity
 		}
 
 		/* Get copies of the fragments */
-		currentDeviceFragment = ( DeviceListFragment ) getSupportFragmentManager ().findFragmentById ( R.id.currentDevice );
+		mCurrentDeviceFragment = ( DeviceListFragment ) getSupportFragmentManager ().findFragmentById ( R.id.currentDevice );
 
 		/* Get copies of the fragments */
-		otherDevicesFragment = ( DeviceListFragment ) getSupportFragmentManager ().findFragmentById ( R.id.otherDevices );
+		mOtherDevicesFragment = ( DeviceListFragment ) getSupportFragmentManager ().findFragmentById ( R.id.otherDevices );
 
 		/* Create a callback for clicking on a non-connected device */
-		otherDevicesFragment.setDeviceClickCallback ( device ->
+		mOtherDevicesFragment.setDeviceClickCallback ( device ->
 		{
-
+			scanForDevices ( false );
+			device.connect ( BASE_UUID );
 		} );
 	}
 
@@ -116,10 +127,46 @@ public class BluetoothActivity extends AppCompatActivity
 		super.onResume ();
 
 		/* Clear the list of other devices */
-		otherDevicesFragment.clearDevices ();
+		mOtherDevicesFragment.clearDevices ();
 
 		/* Scan! */
 		scanForDevices ( true );
+	}
+
+
+
+	/**
+	 * @param bluetoothDevice A new BluetoothDevice to register.
+	 * @return Either new Device or an existing mathing Device.
+	 */
+	private Device registerDevice ( BluetoothDevice bluetoothDevice )
+	{
+		/* Try to find a matching device */
+		int index = IntStream.range ( 0, mKnownDevices.size () )
+				.filter ( i -> mDeviceComparator.compare ( mKnownDevices.get ( i ).getInfo (), bluetoothDevice ) == 0 )
+				.findFirst ()
+				.orElse ( mKnownDevices.size () );
+
+		/* Create a new device if a match has not been found */
+		if ( index == mKnownDevices.size () )
+			mKnownDevices.add ( new Device ( bluetoothDevice, mDeviceStatusChangeCallback ) );
+
+		/* Return the index of the device */
+		return mKnownDevices.get ( index );
+	}
+
+	private void clearDisconnectedDevices ()
+	{
+		mKnownDevices.removeIf ( device ->
+		{
+			if ( !device.isConnected () && !device.isConnecting () )
+			{
+				device.unregisterStatusChangeCallback ( mDeviceStatusChangeCallback );
+				mCurrentDeviceFragment.removeDevice ( device );
+				mOtherDevicesFragment.removeDevice ( device );
+				return true;
+			} else return false;
+		} );
 	}
 
 
@@ -159,7 +206,7 @@ public class BluetoothActivity extends AppCompatActivity
 	private boolean checkBluetoothPermissions ()
 	{
 		boolean granted = true;
-		for ( String p : requiredPermissions  )
+		for ( String p : REQUIRED_PERMISSIONS  )
 			granted &= ActivityCompat.checkSelfPermission ( this, p ) == PackageManager.PERMISSION_GRANTED;
 		return granted;
 	}
@@ -177,7 +224,7 @@ public class BluetoothActivity extends AppCompatActivity
 	 */
 	private void requestBluetoothPermissions ()
 	{
-		ActivityCompat.requestPermissions ( BluetoothActivity.this, requiredPermissions, 2 );
+		ActivityCompat.requestPermissions ( BluetoothActivity.this, REQUIRED_PERMISSIONS, 2 );
 	}
 
 
@@ -196,7 +243,7 @@ public class BluetoothActivity extends AppCompatActivity
 			{
 				BluetoothDevice bluetoothDevice = intent.getParcelableExtra ( BluetoothDevice.EXTRA_DEVICE );
 				if ( filterDevice ( bluetoothDevice ) )
-					otherDevicesFragment.addDevice ( new Device ( bluetoothDevice ) );
+					mOtherDevicesFragment.addDevice ( new Device ( bluetoothDevice ) );
 			}
 		}
 
@@ -205,5 +252,59 @@ public class BluetoothActivity extends AppCompatActivity
 		{
 			return device != null && device.getName () != null;
 		}
-	};
-};
+	}
+
+
+
+	/**
+	 * Implementation of Device.DeviceStatusChangeCallback for handling device status changes.
+	 */
+	private class DeviceStatusChangeCallback implements Device.DeviceStatusChangeCallback
+	{
+		@Override
+		public void callback ( Device device )
+		{
+			if ( device.isConnecting () || device.isConnected () )
+			{
+				mOtherDevicesFragment.removeDevice ( device );
+				mCurrentDeviceFragment.addDevice ( device );
+			} else
+			{
+				mOtherDevicesFragment.addDevice ( device );
+				mCurrentDeviceFragment.removeDevice ( device );
+			}
+		}
+	}
+
+
+	/**
+	 * A comparator over MAC addresses of devices.
+	 */
+	static private class DeviceComparator implements Comparator<BluetoothDevice>
+	{
+		/**
+		 * @param d1 The first device
+		 * @param d2 The second device
+		 * @return The comparison of the MAC addresses of devices.
+		 */
+		@Override
+		public int compare ( BluetoothDevice d1, BluetoothDevice d2 )
+		{
+			long cmp = addressToInt ( d1.getAddress () ) - addressToInt ( d2.getAddress () );
+			return cmp < 0 ? -1 : ( cmp > 0 ? 1 : 0 );
+		}
+
+		/**
+		 * @param address A MAC address of the form AA:BB:CC:DD:EE:FF
+		 * @return An integer representation.
+		 */
+		private long addressToInt ( String address )
+		{
+			long result = 0;
+			String[] bytes = address.split ( ":" );
+			for ( String b : bytes )
+				result = result * 16 + Long.parseLong ( b, 16 );
+			return result;
+		}
+	}
+}

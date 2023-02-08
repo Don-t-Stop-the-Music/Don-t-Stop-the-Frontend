@@ -3,11 +3,12 @@ package com.dontstopthemusic.dontstopthemusic;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.UUID;
 
-public class Device
+public class Device implements Closeable
 {
 
 	/* The bluetooth device itself */
@@ -17,10 +18,10 @@ public class Device
 	private BluetoothSocket mBluetoothSocket;
 
 	/* Whether the device is currently trying to connect */
-	private boolean connecting = false;
+	private boolean mConnecting = false;
 
 	/* A set of callbacks for status changes */
-	private final HashSet<DeviceStatusChangeCallback> statusChangeCallbacks = new HashSet<> ();
+	private final HashSet<DeviceStatusChangeCallback> mStatusChangeCallbacks = new HashSet<> ();
 
 
 
@@ -31,6 +32,17 @@ public class Device
 	{
 		/* Set the device */
 		mBluetoothDevice = bluetoothDevice;
+	}
+
+	/**
+	 * @param bluetoothDevice The Bluetooth device.
+	 * @param statusChangeCallback A callback to be run on status change.
+	 */
+	public Device ( BluetoothDevice bluetoothDevice, DeviceStatusChangeCallback statusChangeCallback )
+	{
+		/* Set the device and callback */
+		mBluetoothDevice = bluetoothDevice;
+		registerStatusChangeCallback ( statusChangeCallback );
 	}
 
 
@@ -64,17 +76,19 @@ public class Device
 	 */
 	public boolean isConnecting ()
 	{
-		return connecting;
+		return mConnecting;
 	}
 
 
 
 	/**
 	 * @param callback The callback to run on a status change.
+	 * The callback is also immediately run.
 	 */
 	public void registerStatusChangeCallback ( DeviceStatusChangeCallback callback )
 	{
-		statusChangeCallbacks.add ( callback );
+		mStatusChangeCallbacks.add ( callback );
+		callback.callback ( this );
 	}
 
 	/**
@@ -82,21 +96,22 @@ public class Device
 	 */
 	public void unregisterStatusChangeCallback ( DeviceStatusChangeCallback callback )
 	{
-		statusChangeCallbacks.remove ( callback );
+		mStatusChangeCallbacks.remove ( callback );
 	}
 
 
 
 	/**
-	 * THIS METHOD IS BLOCKING, THEREFORE IT SHOULD BE CALLED FROM WITHIN A THREAD.
-	 *
-	 * Also call BluetoothAdapter#cancelDiscovery() before calling this function.
+	 * Call BluetoothAdapter#cancelDiscovery() before calling this function.
 	 *
 	 * @param uuid The UUID of the service to connect with.
-	 * @return Whether connection succeeded.
 	 */
-	public boolean connect ( UUID uuid )
+	public void connect ( UUID uuid )
 	{
+		/* State that we are attempting to connect */
+		mConnecting = true;
+		broadcastStatusChange ();
+
 		/* Create the socket, if this has not been done already */
 		if ( mBluetoothSocket == null )
 			try
@@ -104,49 +119,48 @@ public class Device
 				mBluetoothSocket = mBluetoothDevice.createRfcommSocketToServiceRecord ( uuid );
 			} catch ( IOException | SecurityException e )
 			{
-				connecting = false;
+				mConnecting = false;
+				broadcastStatusChange ();
+				return;
 			}
 
-		/* State that we are attempting to connect */
-		connecting = true;
-		broadcastStatusChange ();
-
-		/* Attempt to connect */
-		try
+		/* Start connecting in a new thread */
+		new Thread ( () ->
 		{
-			mBluetoothSocket.connect ();
-		} catch ( IOException | SecurityException e )
-		{
-			close ();
-			connecting = false;
-			return false;
-		}
-
-		/* We have finished connecting */
-		connecting = false;
-		broadcastStatusChange ();
-		return true;
+			/* Attempt to connect */
+			try
+			{
+				mBluetoothSocket.connect ();
+			} catch ( IOException | SecurityException e )
+			{
+				close ();
+			} finally
+			{
+				mConnecting = false;
+				broadcastStatusChange ();
+			}
+		} ).start ();
 	}
 
 
 
 	/**
-     * @return Whether the socket closed cleanly.
+	 * Close the socket.
 	 */
-	public boolean close ()
+	@Override
+	public void close ()
 	{
-		if ( mBluetoothSocket != null )
+		if ( mBluetoothSocket != null && mBluetoothSocket.isConnected () )
 			try
 			{
 				mBluetoothSocket.close ();
-			} catch ( IOException e )
+			} catch ( IOException ignored )
+			{
+			} finally
 			{
 				mBluetoothSocket = null;
 				broadcastStatusChange ();
-				return false;
 			}
-		broadcastStatusChange ();
-		return true;
 	}
 
 
@@ -156,7 +170,7 @@ public class Device
 	 */
 	private void broadcastStatusChange ()
 	{
-		for ( DeviceStatusChangeCallback callback : statusChangeCallbacks )
+		for ( DeviceStatusChangeCallback callback : mStatusChangeCallbacks )
 			callback.callback ( this );
 	}
 
