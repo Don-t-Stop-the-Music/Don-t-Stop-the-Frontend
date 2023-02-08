@@ -1,37 +1,25 @@
 package com.dontstopthemusic.dontstopthemusic;
 
-import android.Manifest;
-import android.app.admin.DeviceAdminService;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothManager;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.ListFragment;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.TreeSet;
+import java.util.stream.IntStream;
 
 
 /**
- * Visually displays some provided list of BluetoothDevice instances.
+ * Visually displays some provided list of Device instances.
  */
 public class DeviceListFragment extends ListFragment
 {
@@ -40,7 +28,15 @@ public class DeviceListFragment extends ListFragment
 	private DeviceListAdapter mDeviceListAdapter;
 
 	/* The device click callback */
-	private DeviceClickCallback deviceClickCallback;
+	private DeviceClickCallback mDeviceClickCallback;
+
+	/* Whether or not to show the connection status of devices */
+	private boolean mShowConnectionStatus = false;
+
+	/* The callback passed to devices to allow them to refresh the list */
+	private final Device.DeviceStatusChangeCallback mDeviceStatusChangeCallback =
+			Device -> refreshDevices ();
+
 
 
 	/**
@@ -79,10 +75,22 @@ public class DeviceListFragment extends ListFragment
 	 */
 	public DeviceClickCallback setDeviceClickCallback ( @Nullable DeviceClickCallback callback )
 	{
-		DeviceClickCallback old = deviceClickCallback;
-		deviceClickCallback = callback;
+		DeviceClickCallback old = mDeviceClickCallback;
+		mDeviceClickCallback = callback;
 		return old;
 	}
+
+
+	/**
+	 * @param show Whether the list should show the connection status of its elements
+	 */
+	public void setShowConnectionStatus ( boolean show )
+	{
+		boolean change = mShowConnectionStatus != show;
+		mShowConnectionStatus = show;
+		mDeviceListAdapter.notifyDataSetChanged ();
+	}
+
 
 
 	/**
@@ -98,38 +106,46 @@ public class DeviceListFragment extends ListFragment
 		super.onListItemClick ( l, v, position, id );
 
 		/* Pass the device to the callback if there is one */
-		if ( deviceClickCallback != null )
-			deviceClickCallback.callback ( getDevice ( position ) );
+		if ( mDeviceClickCallback != null )
+			mDeviceClickCallback.callback ( getDevice ( position ) );
 	}
 
 
 
 	/**
 	 * @param device Add/update the entry for this device.
+	 * @return The index of the added device.
 	 */
-	public void addDevice ( BluetoothDevice device )
+	public int addDevice ( Device device )
 	{
-		mDeviceListAdapter.addItem ( device );
-        mDeviceListAdapter.notifyDataSetChanged ();
+		int index = mDeviceListAdapter.addItem ( device );
+		mDeviceListAdapter.notifyDataSetChanged ();
+		return index;
 	}
 
 	/**
 	 * @param device Remove the entry for this device.
+	 * @return Whether the device was present in the list.
 	 */
-	public void removeDevice ( BluetoothDevice device )
+	public boolean removeDevice ( Device device )
 	{
-		mDeviceListAdapter.removeItem ( device );
+		boolean removed = mDeviceListAdapter.removeItem ( device );
 		mDeviceListAdapter.notifyDataSetChanged ();
+		return removed;
 	}
 
     /**
      * @param devices Add/update the entry for many devices.
+	 * @return The indices of the added devices.
      */
-    public void addDevices ( Iterable<BluetoothDevice> devices )
+    public int[] addDevices ( Iterable<Device> devices )
     {
-        for ( BluetoothDevice device : devices )
-            mDeviceListAdapter.addItem ( device );
+		/* Add all of the indices to a list */
+		ArrayList<Integer> indices = new ArrayList<> ();
+        for ( Device device : devices )
+            indices.add ( mDeviceListAdapter.addItem ( device ) );
         mDeviceListAdapter.notifyDataSetChanged ();
+		return indices.stream().mapToInt ( Integer::intValue ).toArray ();
     }
 
     /**
@@ -140,6 +156,15 @@ public class DeviceListFragment extends ListFragment
         mDeviceListAdapter.clear ();
         mDeviceListAdapter.notifyDataSetChanged ();
     }
+
+
+	/**
+	 * Force the list to update.
+	 */
+	public void refreshDevices ()
+	{
+		mDeviceListAdapter.notifyDataSetChanged ();
+	}
 
 
 
@@ -155,9 +180,9 @@ public class DeviceListFragment extends ListFragment
      * @param i The ith device
      * @return A device.
      */
-    public BluetoothDevice getDevice ( int i )
+    public Device getDevice ( int i )
     {
-        return ( BluetoothDevice ) mDeviceListAdapter.getItem ( i );
+        return ( Device ) mDeviceListAdapter.getItem ( i );
     }
 
 
@@ -165,17 +190,19 @@ public class DeviceListFragment extends ListFragment
 	/**
 	 * The list adapter for the fragment
 	 */
-	private class DeviceListAdapter extends BaseAdapter implements Iterable<BluetoothDevice>
+	private class DeviceListAdapter extends BaseAdapter implements Iterable<Device>
 	{
 
 		/* A list of bluetooth devices in the adapter */
-		private final ArrayList<BluetoothDevice> mDevices;
+		private final ArrayList<Device> mDevices;
 
 		/* An inflator for the fragment */
 		private final LayoutInflater mInflator;
 
 		/* A comparator for devices */
 		private final DeviceComparator deviceComparator = new DeviceComparator ();
+
+
 
 		/**
 		 * Default constructor for the DeviceListAdapter
@@ -196,27 +223,44 @@ public class DeviceListFragment extends ListFragment
 		 */
 		@NonNull
         @Override
-        public Iterator<BluetoothDevice> iterator ()
+        public Iterator<Device> iterator ()
         {
             return mDevices.iterator ();
         }
 
         /**
 		 * @param device The device to add/update in the list.
-		 * @return True iff the device is newly added.
+		 * @return The index of the added device.
 		 */
-		public boolean addItem ( BluetoothDevice device )
+		public int addItem ( Device device )
 		{
-			boolean removed = mDevices.removeIf ( d -> deviceComparator.compare ( d, device ) == 0 );
-			mDevices.add ( device );
-			return !removed;
+			/* Try to find a matching device */
+			int index = IntStream.range ( 0, mDevices.size () )
+					.filter ( i -> deviceComparator.compare ( mDevices.get ( i ), device ) == 0 )
+					.findFirst ()
+					.orElse ( mDevices.size () );
+
+			/* Either add a new device, or modify the existing one */
+			if ( index == mDevices.size () )
+				mDevices.add ( device );
+			else
+			{
+				mDevices.get ( index ).unregisterStatusChangeCallback ( mDeviceStatusChangeCallback );
+				mDevices.set ( index, device );
+			}
+
+			/* Register the status change callback */
+			device.registerStatusChangeCallback ( mDeviceStatusChangeCallback );
+
+			/* Return the index of the device */
+			return index;
 		}
 
 		/**
 		 * @param device The device to remove from the list.
 		 * @return Whether a device was removed.
 		 */
-		public boolean removeItem ( BluetoothDevice device )
+		public boolean removeItem ( Device device )
 		{
 			return mDevices.removeIf ( d -> deviceComparator.compare ( d, device ) == 0 );
 		}
@@ -313,14 +357,14 @@ public class DeviceListFragment extends ListFragment
 		 *
 		 * @param device The device with which to update the view's name and address
 		 */
-		public void updateText ( BluetoothDevice device ) throws SecurityException
+		public void updateText ( Device device ) throws SecurityException
 		{
-			final String name = device.getName ();
+			final String name = device.getInfo ().getName ();
 			if ( name != null && name.length () > 0 )
 				this.deviceName.setText ( name );
 			else
 				this.deviceName.setText ( R.string.unknown_device );
-			this.deviceAddress.setText ( device.getAddress () );
+			this.deviceAddress.setText ( device.getInfo ().getAddress () );
 		}
 	}
 
@@ -328,7 +372,7 @@ public class DeviceListFragment extends ListFragment
 	/**
 	 * A comparator over MAC addresses of devices.
 	 */
-	static private class DeviceComparator implements Comparator<BluetoothDevice>
+	static private class DeviceComparator implements Comparator<Device>
 	{
 		/**
 		 * @param d1 The first device
@@ -336,9 +380,9 @@ public class DeviceListFragment extends ListFragment
 		 * @return The comparison of the MAC addresses of devices.
 		 */
 		@Override
-		public int compare ( BluetoothDevice d1, BluetoothDevice d2 )
+		public int compare ( Device d1, Device d2 )
 		{
-			long cmp = addressToInt ( d1.getAddress () ) - addressToInt ( d2.getAddress () );
+			long cmp = addressToInt ( d1.getInfo ().getAddress () ) - addressToInt ( d2.getInfo ().getAddress () );
 			return cmp < 0 ? -1 : ( cmp > 0 ? 1 : 0 );
 		}
 
@@ -365,6 +409,6 @@ public class DeviceListFragment extends ListFragment
 		/**
 		 * @param device The device that was just clicked.
 		 */
-		public void callback ( BluetoothDevice device );
+		public void callback ( Device device );
 	}
 }

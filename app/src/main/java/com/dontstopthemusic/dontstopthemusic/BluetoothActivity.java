@@ -118,20 +118,6 @@ public class BluetoothActivity extends AppCompatActivity
 		/* Clear the list of other devices */
 		otherDevicesFragment.clearDevices ();
 
-		/* Ensure Bluetooth is enabled on the device.
-		 * If Bluetooth is not currently enabled, fire an intent to display a dialog asking the user to grant permission to enable it.
-		 */
-		if ( !mBluetoothAdapter.isEnabled () )
-		{
-			throw new SecurityException ( "Bluetooth is disabled and the a request is not yet implemented!" );
-			//Intent enableBtIntent = new Intent ( BluetoothAdapter.ACTION_REQUEST_ENABLE );
-			//startActivityForResult ( enableBtIntent, 1 );
-		}
-
-		/* Check permissions */
-		if ( !checkBluetoothPermissions () )
-			requestBluetoothPermissions ();
-
 		/* Scan! */
 		scanForDevices ( true );
 	}
@@ -143,7 +129,7 @@ public class BluetoothActivity extends AppCompatActivity
 	 */
 	private void scanForDevices ( final boolean enable ) throws SecurityException
 	{
-		if ( checkBluetoothPermissions () )
+		if ( checkBluetoothPermissions () && checkBluetoothEnabled () )
 			if ( enable && !mScanning )
 			{
 				/* Register the Bluetooth receiver */
@@ -178,6 +164,14 @@ public class BluetoothActivity extends AppCompatActivity
 		return granted;
 	}
 
+	private boolean checkBluetoothEnabled ()
+	{
+		boolean enabled = mBluetoothAdapter.isEnabled ();
+		if ( !enabled )
+			Toast.makeText ( this, R.string.enable_bluetooth, Toast.LENGTH_SHORT ).show ();
+		return enabled;
+	}
+
 	/**
 	 *
 	 */
@@ -200,16 +194,16 @@ public class BluetoothActivity extends AppCompatActivity
 			/* Check that this is actually a new device broadcast */
 			if ( BluetoothDevice.ACTION_FOUND.equals ( intent.getAction () ) )
 			{
-				BluetoothDevice device = intent.getParcelableExtra ( BluetoothDevice.EXTRA_DEVICE );
-				if ( filterDevice ( device ) )
-					otherDevicesFragment.addDevice ( device );
+				BluetoothDevice bluetoothDevice = intent.getParcelableExtra ( BluetoothDevice.EXTRA_DEVICE );
+				if ( filterDevice ( bluetoothDevice ) )
+					otherDevicesFragment.addDevice ( new Device ( bluetoothDevice ) );
 			}
 		}
 
 		/* Filter out certain devices */
 		private boolean filterDevice ( BluetoothDevice device ) throws SecurityException
 		{
-			return device.getName () != null;
+			return device != null && device.getName () != null;
 		}
 	};
 };
