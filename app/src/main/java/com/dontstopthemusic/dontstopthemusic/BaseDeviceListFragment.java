@@ -67,7 +67,7 @@ public abstract class BaseDeviceListFragment extends ListFragment
 	 * @param callback A new callback for a clicked device (may be null).
 	 * @return The old callback.
 	 */
-	public DeviceClickCallback registerDeviceClickCallback ( @Nullable DeviceClickCallback callback )
+	public DeviceClickCallback setDeviceClickCallback ( @Nullable DeviceClickCallback callback )
 	{
 		DeviceClickCallback old = mDeviceClickCallback;
 		mDeviceClickCallback = callback;

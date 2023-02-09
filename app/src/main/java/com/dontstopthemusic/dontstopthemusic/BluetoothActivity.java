@@ -26,7 +26,7 @@ public class BluetoothActivity extends AppCompatActivity
 	private BluetoothAdapter mBluetoothAdapter;
 
 	/* The current device fragment */
-	private SimpleDeviceListFragment mCurrentDevicesFragment;
+	private StatusDeviceListFragment mCurrentDevicesFragment;
 
 	/* The list of other devices */
 	private SimpleDeviceListFragment mOtherDevicesFragment;
@@ -102,7 +102,7 @@ public class BluetoothActivity extends AppCompatActivity
 		}
 
 		/* Get copies of the fragments */
-		mCurrentDevicesFragment = ( SimpleDeviceListFragment ) getSupportFragmentManager ().findFragmentById ( R.id.currentDevice );
+		mCurrentDevicesFragment = ( StatusDeviceListFragment ) getSupportFragmentManager ().findFragmentById ( R.id.currentDevice );
 
 		/* Get copies of the fragments */
 		mOtherDevicesFragment = ( SimpleDeviceListFragment ) getSupportFragmentManager ().findFragmentById ( R.id.otherDevices );

@@ -15,4 +15,7 @@
     <string name="current_device">Current Devices</string>
     <string name="other_devices">Other Devices</string>
     <string name="enable_bluetooth">Please enable Bluetooth</string>
+    <string name="bluetooth_connected">Connected</string>
+    <string name="blutooth_connecting">Connecting</string>
+    <string name="bluetooth_disconnected">Disconnected</string>
 </resources>
