@@ -11,6 +11,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -31,6 +32,9 @@ public class BluetoothActivity extends AppCompatActivity
 
 	/* The list of other devices */
 	private SimpleDeviceListFragment mOtherDevicesFragment;
+
+	/* The scan button */
+	private Button mScanButton;
 
 	/* The bluetooth device receiver */
 	private final BluetoothDeviceReceiver mBluetoothReceiver = new BluetoothDeviceReceiver ();
@@ -111,11 +115,24 @@ public class BluetoothActivity extends AppCompatActivity
 		/* Get copies of the fragments */
 		mOtherDevicesFragment = ( SimpleDeviceListFragment ) getSupportFragmentManager ().findFragmentById ( R.id.otherDevices );
 
+		/* Get the scan button */
+		mScanButton = ( Button ) findViewById ( R.id.scan_button );
+
 		/* Create a callback for clicking on a non-connected device */
 		mOtherDevicesFragment.setDeviceClickCallback ( device ->
 		{
 			scanForDevices ( false );
 			device.connect ( RPI_UUID );
+		} );
+
+		/* Create a click scan callback */
+		mScanButton.setOnClickListener ( view ->
+		{
+			if ( !mScanning )
+			{
+				clearDisconnectedDevices ();
+				scanForDevices ( true );
+			}
 		} );
 	}
 

@@ -5,6 +5,8 @@ import android.bluetooth.BluetoothSocket;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.UUID;
 
