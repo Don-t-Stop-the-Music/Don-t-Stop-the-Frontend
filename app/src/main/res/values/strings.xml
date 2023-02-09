@@ -8,10 +8,12 @@
     <string name="next">Next</string>
     <string name="previous">Previous</string>
 
-    <string name="Bluetooth_connection">Bluetooth connection page </string>
+    <string name="Bluetooth_connection"> Bluetooth Connection page </string>
     <string name="RPi_connection">RPi connection page </string>
     <string name="Homepage"> Homepage </string>
     <string name="Help_button"> Help </string>
+
+    <string name="Testing"> TESTING </string>
 
     <string name="Debug_feedback"> Debug feedback </string>
     <string name="Debug_silence"> Debug silence </string>
