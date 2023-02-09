@@ -134,6 +134,11 @@ public class BluetoothActivity extends AppCompatActivity
 				scanForDevices ( true );
 			}
 		} );
+
+		/* Register the Bluetooth receiver */
+		IntentFilter filter = new IntentFilter ( BluetoothDevice.ACTION_FOUND );
+		filter.addAction ( BluetoothAdapter.ACTION_DISCOVERY_FINISHED );
+		registerReceiver ( mBluetoothReceiver, filter );
 	}
 
 
@@ -204,10 +209,6 @@ public class BluetoothActivity extends AppCompatActivity
 		if ( checkBluetoothPermissions () && checkBluetoothEnabled () )
 			if ( enable && !mScanning )
 			{
-				/* Register the Bluetooth receiver */
-				IntentFilter filter = new IntentFilter ( BluetoothDevice.ACTION_FOUND );
-				registerReceiver ( mBluetoothReceiver, filter );
-
 				/* Start scanning */
 				mScanning = true;
 				mBluetoothAdapter.startDiscovery ();
@@ -218,9 +219,6 @@ public class BluetoothActivity extends AppCompatActivity
 				/* Stop scanning */
 				mScanning = false;
 				mBluetoothAdapter.cancelDiscovery ();
-
-				/* Unregister the receiver */
-				unregisterReceiver ( mBluetoothReceiver );
 			}
 	}
 
@@ -263,12 +261,18 @@ public class BluetoothActivity extends AppCompatActivity
 		@Override
 		public void onReceive ( Context context, Intent intent )
 		{
-			/* Check that this is actually a new device broadcast */
+			/* If this is a new device broadcast */
 			if ( BluetoothDevice.ACTION_FOUND.equals ( intent.getAction () ) )
 			{
 				BluetoothDevice bluetoothDevice = intent.getParcelableExtra ( BluetoothDevice.EXTRA_DEVICE );
 				if ( filterDevice ( bluetoothDevice ) )
 					registerDevice ( bluetoothDevice );
+			}
+
+			/* Otherwise if the scan has ended */
+			else if ( BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals ( intent.getAction () ) )
+			{
+				mScanning = false;
 			}
 		}
 

@@ -2,9 +2,12 @@ package com.dontstopthemusic.dontstopthemusic;
 
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.util.Log;
 
 import java.io.Closeable;
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -136,6 +139,7 @@ public class Device implements Closeable
 			} catch ( IOException | SecurityException e )
 			{
 				close ();
+				return;
 			} finally
 			{
 				mConnecting = false;

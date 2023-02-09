@@ -18,4 +18,5 @@
     <string name="bluetooth_connected">Connected</string>
     <string name="blutooth_connecting">Connecting</string>
     <string name="bluetooth_disconnected">Disconnected</string>
+    <string name="scan">Scan</string>
 </resources>
