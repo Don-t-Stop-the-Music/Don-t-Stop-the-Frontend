@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -47,14 +48,17 @@ public class BluetoothActivity extends AppCompatActivity
 
 
 
+	/* UUIDs */
 	static final UUID BASE_UUID = UUID.fromString ( "00000000-0000-1000-8000-00805F9B34F" );
+	static final UUID RPI_UUID = new UUID ( 0x1e0ca4ea299d4335L, 0x93eb27fcfe7fa848L );
+
 
 	/* Required permissions */
 	static final String[] REQUIRED_PERMISSIONS =
 		{
-				Manifest.permission.BLUETOOTH_CONNECT,
-				Manifest.permission.BLUETOOTH_SCAN,
-				Manifest.permission.ACCESS_FINE_LOCATION,
+				//Manifest.permission.BLUETOOTH_CONNECT,
+				//Manifest.permission.BLUETOOTH_SCAN,
+				//Manifest.permission.ACCESS_FINE_LOCATION,
 				//Manifest.permission.ACCESS_COARSE_LOCATION,
 				//Manifest.permission.ACCESS_BACKGROUND_LOCATION
 		};
@@ -111,7 +115,7 @@ public class BluetoothActivity extends AppCompatActivity
 		mOtherDevicesFragment.setDeviceClickCallback ( device ->
 		{
 			scanForDevices ( false );
-			device.connect ( BASE_UUID );
+			device.connect ( RPI_UUID );
 		} );
 	}
 
@@ -125,6 +129,10 @@ public class BluetoothActivity extends AppCompatActivity
 	{
 		/* Resume the superclass */
 		super.onResume ();
+
+		/* Check permissions */
+		if ( !checkBluetoothPermissions () )
+			requestBluetoothPermissions ();
 
 		/* Clear the list of other devices */
 		mOtherDevicesFragment.clearDevices ();
@@ -243,7 +251,7 @@ public class BluetoothActivity extends AppCompatActivity
 			{
 				BluetoothDevice bluetoothDevice = intent.getParcelableExtra ( BluetoothDevice.EXTRA_DEVICE );
 				if ( filterDevice ( bluetoothDevice ) )
-					mOtherDevicesFragment.addDevice ( new Device ( bluetoothDevice ) );
+					registerDevice ( bluetoothDevice );
 			}
 		}
 
@@ -264,15 +272,18 @@ public class BluetoothActivity extends AppCompatActivity
 		@Override
 		public void callback ( Device device )
 		{
-			if ( device.isConnecting () || device.isConnected () )
+			runOnUiThread ( () ->
 			{
-				mOtherDevicesFragment.removeDevice ( device );
-				mCurrentDevicesFragment.addDevice ( device );
-			} else
-			{
-				mOtherDevicesFragment.addDevice ( device );
-				mCurrentDevicesFragment.removeDevice ( device );
-			}
+				if ( device.isConnecting () || device.isConnected () )
+				{
+					mOtherDevicesFragment.removeDevice ( device );
+					mCurrentDevicesFragment.addDevice ( device );
+				} else
+				{
+					mOtherDevicesFragment.addDevice ( device );
+					mCurrentDevicesFragment.removeDevice ( device );
+				}
+			} );
 		}
 	}
 
