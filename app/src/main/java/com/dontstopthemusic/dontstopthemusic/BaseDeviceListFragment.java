@@ -133,6 +133,19 @@ public abstract class BaseDeviceListFragment extends ListFragment
 	}
 
 	/**
+	 * @param devices Remove the entries for many devices.
+	 */
+	public void removeDevices ( Iterable<Device> devices )
+	{
+		/* Add all of the indices to a list */
+		boolean removed = false;
+		for ( Device device : devices )
+			removed |= mDeviceListAdapter.removeItem ( device );
+		if ( removed )
+			refreshDevices ();
+	}
+
+	/**
 	 * Remove all devices from the list.
 	 */
 	public void clearDevices ()

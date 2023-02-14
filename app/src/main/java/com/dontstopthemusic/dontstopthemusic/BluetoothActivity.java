@@ -13,13 +13,16 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.stream.IntStream;
 
@@ -48,12 +51,6 @@ public class BluetoothActivity extends AppCompatActivity
 
 	/* The connection handler for binding to the Bluetooth service */
 	private final BluetoothServiceConnection mBluetoothServiceConnection = new BluetoothServiceConnection ();
-
-	/* The list of known devices */
-	private final ArrayList<Device> mKnownDevices = new ArrayList<> ();
-
-	/* A comparator for devices */
-	private final DeviceComparator mDeviceComparator = new DeviceComparator ();
 
 	/* Whether bluetooth is currently scanning */
 	boolean mScanning;
@@ -116,19 +113,8 @@ public class BluetoothActivity extends AppCompatActivity
 			return;
 		}
 
-		/* Register the Bluetooth receiver */
-		IntentFilter filter = new IntentFilter ( BluetoothDevice.ACTION_FOUND );
-		filter.addAction ( BluetoothAdapter.ACTION_DISCOVERY_FINISHED );
-		registerReceiver ( mBluetoothReceiver, filter );
-
 		/* Start the bluetooth service */
 		startForegroundService ( new Intent ( this, BluetoothService.class ) );
-
-		/* Bind to the Bluetooth service */
-		bindService (
-				new Intent ( this, BluetoothService.class ),
-				mBluetoothServiceConnection,
-				Context.BIND_AUTO_CREATE );
 
 
 
@@ -173,7 +159,23 @@ public class BluetoothActivity extends AppCompatActivity
 		} );
 	}
 
+	@Override
+	protected void onStart ()
+	{
+		/* Start the superclass */
+		super.onStart ();
 
+		/* Bind to the Bluetooth service */
+		bindService (
+				new Intent ( this, BluetoothService.class ),
+				mBluetoothServiceConnection,
+				Context.BIND_AUTO_CREATE );
+
+		/* Register the bluetooth receiver */
+		IntentFilter filter = new IntentFilter ( BluetoothDevice.ACTION_FOUND );
+		filter.addAction ( BluetoothAdapter.ACTION_DISCOVERY_FINISHED );
+		registerReceiver ( mBluetoothReceiver, filter );
+	}
 
 	/**
 	 * Run when the activity resumes, including after onStart.
@@ -183,16 +185,33 @@ public class BluetoothActivity extends AppCompatActivity
 	{
 		/* Resume the superclass */
 		super.onResume ();
+	}
 
-		/* Check permissions */
-		if ( !checkBluetoothPermissions () )
-			requestBluetoothPermissions ();
+	/**
+	 * When another activity comes into the foreground.
+	 */
+	@Override
+	protected void onPause ()
+	{
+		super.onPause ();
+	}
 
-		/* Clear the list of other devices */
-		mOtherDevicesFragment.clearDevices ();
+	/**
+	 * When the activity is no longer visible
+	 */
+	@Override
+	protected void onStop ()
+	{
+		/* Stop the superclass */
+		super.onStop ();
 
-		/* Scan */
-		scanForDevices ( true );
+		/* Stop scanning */
+		scanForDevices ( false );
+		unregisterReceiver ( mBluetoothReceiver );
+
+		/* Unbind the Bluetooth service */
+		unbindService ( mBluetoothServiceConnection );
+		mBluetoothServiceConnection.onServiceDisconnected ( null );
 	}
 
 	/**
@@ -203,10 +222,9 @@ public class BluetoothActivity extends AppCompatActivity
 	{
 		/* Destroy the superclass */
 		super.onDestroy ();
-
-		/* Unbind the Bluetooth service */
-		unbindService ( mBluetoothServiceConnection );
 	}
+
+
 
 	/**
 	 * @param bluetoothDevice A new BluetoothDevice to register.
@@ -214,32 +232,20 @@ public class BluetoothActivity extends AppCompatActivity
 	 */
 	private Device registerDevice ( BluetoothDevice bluetoothDevice )
 	{
-		/* Try to find a matching device */
-		int index = IntStream.range ( 0, mKnownDevices.size () )
-				.filter ( i -> mDeviceComparator.compare ( mKnownDevices.get ( i ).getInfo (), bluetoothDevice ) == 0 )
-				.findFirst ()
-				.orElse ( mKnownDevices.size () );
-
-		/* Create a new device if a match has not been found */
-		if ( index == mKnownDevices.size () )
-			mKnownDevices.add ( new Device ( bluetoothDevice, mDeviceStatusChangeCallback ) );
-
-		/* Return the index of the device */
-		return mKnownDevices.get ( index );
+		Device device = mBluetoothService.registerDevice ( bluetoothDevice );
+		device.registerStatusChangeCallback ( mDeviceStatusChangeCallback );
+		return device;
 	}
 
+	/**
+	 * Forget about all currently disconnected devices.
+	 */
 	private void clearDisconnectedDevices ()
 	{
-		mKnownDevices.removeIf ( device ->
-		{
-			if ( !device.isConnected () && !device.isConnecting () )
-			{
-				device.unregisterStatusChangeCallback ( mDeviceStatusChangeCallback );
-				mConnectedDevicesFragment.removeDevice ( device );
-				mOtherDevicesFragment.removeDevice ( device );
-				return true;
-			} else return false;
-		} );
+		Device[] devices = mBluetoothService.clearDisconnectedDevices ();
+		mOtherDevicesFragment.removeDevices ( Arrays.asList ( devices ) );
+		for ( Device device : devices )
+			device.unregisterStatusChangeCallback ( mDeviceStatusChangeCallback );
 	}
 
 
@@ -302,9 +308,22 @@ public class BluetoothActivity extends AppCompatActivity
 	 */
 	public class BluetoothServiceConnection implements ServiceConnection
 	{
+		/**
+		 * @param component Unused
+		 */
 		@Override
-		public void onServiceDisconnected ( ComponentName component ) {
-			mBluetoothService = null;
+		public void onServiceDisconnected ( @Nullable ComponentName component )
+		{
+			/* Theres a small race condition meaning that we may not have actually connected */
+			if ( mBluetoothService != null )
+			{
+				/* Remove the callbacks */
+				for ( Device device : mBluetoothService.getRegisteredDevices () )
+					device.unregisterStatusChangeCallback ( mDeviceStatusChangeCallback );
+
+				/* Nullify the connection */
+				mBluetoothService = null;
+			}
 		}
 
 		/**
@@ -314,8 +333,20 @@ public class BluetoothActivity extends AppCompatActivity
 		@Override
 		public void onServiceConnected ( ComponentName component, IBinder service )
 		{
+			/* Bind */
 			BluetoothService.LocalBinder binder = ( BluetoothService.LocalBinder ) service;
-			mBluetoothService = binder.getService();
+			mBluetoothService = binder.getService ();
+
+			/* Load the devices from the service */
+			for ( Device device : mBluetoothService.getRegisteredDevices () )
+				device.registerStatusChangeCallback ( mDeviceStatusChangeCallback );
+
+			/* Refresh the fragments */
+			mConnectedDevicesFragment.refreshDevices ();
+			mOtherDevicesFragment.refreshDevices ();
+
+			/* Begin scanning */
+			scanForDevices ( true );
 		}
 	}
 
@@ -378,34 +409,4 @@ public class BluetoothActivity extends AppCompatActivity
 	}
 
 
-	/**
-	 * A comparator over MAC addresses of devices.
-	 */
-	static private class DeviceComparator implements Comparator<BluetoothDevice>
-	{
-		/**
-		 * @param d1 The first device
-		 * @param d2 The second device
-		 * @return The comparison of the MAC addresses of devices.
-		 */
-		@Override
-		public int compare ( BluetoothDevice d1, BluetoothDevice d2 )
-		{
-			long cmp = addressToInt ( d1.getAddress () ) - addressToInt ( d2.getAddress () );
-			return cmp < 0 ? -1 : ( cmp > 0 ? 1 : 0 );
-		}
-
-		/**
-		 * @param address A MAC address of the form AA:BB:CC:DD:EE:FF
-		 * @return An integer representation.
-		 */
-		private long addressToInt ( String address )
-		{
-			long result = 0;
-			String[] bytes = address.split ( ":" );
-			for ( String b : bytes )
-				result = result * 16 + Long.parseLong ( b, 16 );
-			return result;
-		}
-	}
 }

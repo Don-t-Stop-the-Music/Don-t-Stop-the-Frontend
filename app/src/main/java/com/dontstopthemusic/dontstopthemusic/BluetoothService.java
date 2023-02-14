@@ -6,6 +6,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
@@ -16,7 +17,12 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import java.nio.channels.Channel;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.stream.IntStream;
 
 public class BluetoothService extends Service
 {
@@ -34,6 +40,14 @@ public class BluetoothService extends Service
 
 	/* The foreground service notification */
 	private NotificationCompat.Builder mNotificationBuilder;
+
+
+
+	/* The list of known devices */
+	private final ArrayList<Device> mKnownDevices = new ArrayList<> ();
+
+	/* A comparator for devices */
+	private final DeviceComparator mDeviceComparator = new DeviceComparator ();
 
 
 
@@ -107,13 +121,55 @@ public class BluetoothService extends Service
 		mIsRunning = false;
 	}
 
+
+
+	/**
+	 * @param bluetoothDevice A new BluetoothDevice to register.
+	 * @return Either new Device or an existing Device.
+	 */
+	public Device registerDevice ( BluetoothDevice bluetoothDevice )
+	{
+		/* Try to find a matching device */
+		int index = IntStream.range ( 0, mKnownDevices.size () )
+				.filter ( i -> mDeviceComparator.compare ( mKnownDevices.get ( i ).getInfo (), bluetoothDevice ) == 0 )
+				.findFirst ()
+				.orElse ( mKnownDevices.size () );
+
+		/* Create a new device if a match has not been found */
+		if ( index == mKnownDevices.size () )
+			mKnownDevices.add ( new Device ( bluetoothDevice ) );
+
+		/* Return the index of the device */
+		return mKnownDevices.get ( index );
+	}
+
+	/**
+	 * Remove disconnected devices from the service.
+	 *
+	 * @return The disconnected devices.
+	 */
+	public Device[] clearDisconnectedDevices ()
+	{
+		Device[] devices = mKnownDevices
+				.stream()
+				.filter ( device -> !device.isConnected () && !device.isConnecting () )
+				.toArray ( Device[]::new );
+		mKnownDevices.removeIf ( device -> !device.isConnected () && !device.isConnecting () );
+		return devices;
+	}
+
+	/**
+	 * @return An iterable to known devices.
+	 */
+	public Iterable<Device> getRegisteredDevices ()
+	{
+		return mKnownDevices;
+	}
+
 	/**
 	 * @param device Start reading a new device.
 	 */
-	public void connectToDevice ( Device device )
-	{
-		device.connect ();
-	}
+	public void connectToDevice ( Device device ) {	device.connect ();	}
 
 	/**
 	 * @param device The device to set as the focus
@@ -134,6 +190,7 @@ public class BluetoothService extends Service
 	}
 
 
+
 	/**
 	 * A binder which returns a Bluetooth service instance.
 	 */
@@ -142,6 +199,39 @@ public class BluetoothService extends Service
 		BluetoothService getService ()
 		{
 			return BluetoothService.this;
+		}
+	}
+
+
+
+	/**
+	 * A comparator over MAC addresses of devices.
+	 */
+	static private class DeviceComparator implements Comparator<BluetoothDevice>
+	{
+		/**
+		 * @param d1 The first device
+		 * @param d2 The second device
+		 * @return The comparison of the MAC addresses of devices.
+		 */
+		@Override
+		public int compare ( BluetoothDevice d1, BluetoothDevice d2 )
+		{
+			long cmp = addressToInt ( d1.getAddress () ) - addressToInt ( d2.getAddress () );
+			return cmp < 0 ? -1 : ( cmp > 0 ? 1 : 0 );
+		}
+
+		/**
+		 * @param address A MAC address of the form AA:BB:CC:DD:EE:FF
+		 * @return An integer representation.
+		 */
+		private long addressToInt ( String address )
+		{
+			long result = 0;
+			String[] bytes = address.split ( ":" );
+			for ( String b : bytes )
+				result = result * 16 + Long.parseLong ( b, 16 );
+			return result;
 		}
 	}
 }
