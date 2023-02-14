@@ -32,10 +32,9 @@ public abstract class BaseDeviceListFragment extends ListFragment
 			Device -> refreshDevices ();
 
 
-
 	/**
 	 * @param savedInstanceState If the fragment is being re-created from
-	 * a previous saved state, this is the state.
+	 *                           a previous saved state, this is the state.
 	 */
 	@Override
 	public void onCreate ( @Nullable Bundle savedInstanceState )
@@ -62,7 +61,6 @@ public abstract class BaseDeviceListFragment extends ListFragment
 	}
 
 
-
 	/**
 	 * @param callback A new callback for a clicked device (may be null).
 	 * @return The old callback.
@@ -75,12 +73,11 @@ public abstract class BaseDeviceListFragment extends ListFragment
 	}
 
 
-
 	/**
-	 * @param l The ListView where the click happened
-	 * @param v The view that was clicked within the ListView
+	 * @param l        The ListView where the click happened
+	 * @param v        The view that was clicked within the ListView
 	 * @param position The position of the view in the list
-	 * @param id The row id of the item that was clicked
+	 * @param id       The row id of the item that was clicked
 	 */
 	@Override
 	public void onListItemClick ( @NonNull ListView l, @NonNull View v, int position, long id )
@@ -94,7 +91,6 @@ public abstract class BaseDeviceListFragment extends ListFragment
 	}
 
 
-
 	/**
 	 * @param device Add/update the entry for this device.
 	 * @return Whether the device was newly added.
@@ -105,7 +101,7 @@ public abstract class BaseDeviceListFragment extends ListFragment
 		/* Note that we consider the possibility that the device has changed state,
 		 * so we always notify that the dataset has changed.
 		 */
-		mDeviceListAdapter.notifyDataSetChanged ();
+		refreshDevices ();
 		return added;
 	}
 
@@ -117,40 +113,47 @@ public abstract class BaseDeviceListFragment extends ListFragment
 	{
 		boolean removed = mDeviceListAdapter.removeItem ( device );
 		if ( removed )
-			mDeviceListAdapter.notifyDataSetChanged ();
+			refreshDevices ();
 		return removed;
 	}
 
-    /**
-     * @param devices Add/update the entry for many devices.
-     */
-    public void addDevices ( Iterable<Device> devices )
-    {
+	/**
+	 * @param devices Add/update the entry for many devices.
+	 */
+	public void addDevices ( Iterable<Device> devices )
+	{
 		/* Add all of the indices to a list */
 		boolean added = false;
-        for ( Device device : devices )
+		for ( Device device : devices )
 			added |= mDeviceListAdapter.addItem ( device );
 		if ( added )
-			mDeviceListAdapter.notifyDataSetChanged ();
-    }
+			refreshDevices ();
+	}
 
-    /**
-     * Remove all devices from the list.
-     */
-    public void clearDevices ()
-    {
-        mDeviceListAdapter.clear ();
-        mDeviceListAdapter.notifyDataSetChanged ();
-    }
+	/**
+	 * Remove all devices from the list.
+	 */
+	public void clearDevices ()
+	{
+		mDeviceListAdapter.clear ();
+		refreshDevices ();
+	}
 
 	/**
 	 * Force the list to update.
 	 */
 	public void refreshDevices ()
 	{
+		/* Notify changes */
 		mDeviceListAdapter.notifyDataSetChanged ();
-	}
 
+		/* Modify the height */
+		ViewGroup.LayoutParams params = this.getListView ().getLayoutParams ();
+		this.getListView ().setLayoutParams (
+				new ListView.LayoutParams (
+						params.width,
+						mDeviceListAdapter.getContentsHeight () ) );
+	}
 
 
 	/**
@@ -161,15 +164,11 @@ public abstract class BaseDeviceListFragment extends ListFragment
 		return mDeviceListAdapter.getCount ();
 	}
 
-    /**
-     * @param i The ith device
-     * @return A device.
-     */
-    public Device getDevice ( int i )
-    {
-        return ( Device ) mDeviceListAdapter.getItem ( i );
-    }
-
+	/**
+	 * @param i The ith device
+	 * @return A device.
+	 */
+	public Device getDevice ( int i ) { return ( Device ) mDeviceListAdapter.getItem ( i );	}
 
 
 	/**
@@ -183,7 +182,6 @@ public abstract class BaseDeviceListFragment extends ListFragment
 
 		/* An inflator for the fragment */
 		private final LayoutInflater mInflator;
-
 
 
 		/**
@@ -204,13 +202,13 @@ public abstract class BaseDeviceListFragment extends ListFragment
 		 * @return An iterator over the contained items.
 		 */
 		@NonNull
-        @Override
-        public Iterator<Device> iterator ()
-        {
-            return mDevices.iterator ();
-        }
+		@Override
+		public Iterator<Device> iterator ()
+		{
+			return mDevices.iterator ();
+		}
 
-        /**
+		/**
 		 * @param device Whether the device was newly added.
 		 */
 		public boolean addItem ( Device device )
@@ -267,14 +265,14 @@ public abstract class BaseDeviceListFragment extends ListFragment
 			return mDevices.get ( i ).hashCode ();
 		}
 
-        /**
-         * @param i The index of a device.
-         * @param view The view to update, or otherwise create if is null.
-         * @param viewGroup Unused.
-         * @return A new or updated view for the specified device.
-         */
+		/**
+		 * @param i         The index of a device.
+		 * @param view      The view to update, or otherwise create if is null.
+		 * @param viewGroup Unused.
+		 * @return A new or updated view for the specified device.
+		 */
 		@Override
-		public View getView ( int i, @Nullable View view, ViewGroup viewGroup )
+		public View getView ( int i, @Nullable View view, @Nullable ViewGroup viewGroup )
 		{
 			/* Create a new view if it does not exist already */
 			if ( view == null )
@@ -283,6 +281,29 @@ public abstract class BaseDeviceListFragment extends ListFragment
 			/* Update the view */
 			updateListItemView ( view, mDevices.get ( i ) );
 			return view;
+		}
+
+		/**
+		 * @return The height of all of the combined contents of the list.
+		 */
+		public int getContentsHeight ()
+		{
+			/* The height accumulator */
+			int totalHeight = 0;
+
+			/* Accumulate the height of the views */
+			for ( int i = 0; i < mDevices.size (); ++i )
+			{
+				View item = getView ( i, null, null );
+				item.measure ( 0, 0 );
+				totalHeight += item.getMeasuredHeight ();
+			}
+
+			/* Accumulate the height of the dividers */
+			totalHeight += BaseDeviceListFragment.this.getListView ().getDividerHeight () * ( mDevices.size () - 1 );
+
+			/* Return the height */
+			return totalHeight;
 		}
 	}
 
@@ -294,11 +315,10 @@ public abstract class BaseDeviceListFragment extends ListFragment
 	protected abstract int getListItemLayout ();
 
 	/**
-	 * @param view The view to update.
+	 * @param view   The view to update.
 	 * @param device The device to update the view to.
 	 */
 	protected abstract void updateListItemView ( View view, Device device ) throws SecurityException;
-
 
 
 	/**
