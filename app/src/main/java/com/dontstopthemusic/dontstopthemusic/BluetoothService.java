@@ -1,7 +1,6 @@
 package com.dontstopthemusic.dontstopthemusic;
 
 import android.app.Activity;
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -9,19 +8,11 @@ import android.app.Service;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.os.Binder;
-import android.os.IBinder;
-import android.util.Log;
 
-import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 
-import java.nio.channels.Channel;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.stream.IntStream;
 
 public class BluetoothService extends Service
@@ -148,7 +139,7 @@ public class BluetoothService extends Service
 	 *
 	 * @return The disconnected devices.
 	 */
-	public Device[] clearDisconnectedDevices ()
+	public Device[] unregisterDisconnectedDevices ()
 	{
 		Device[] devices = mKnownDevices
 				.stream()

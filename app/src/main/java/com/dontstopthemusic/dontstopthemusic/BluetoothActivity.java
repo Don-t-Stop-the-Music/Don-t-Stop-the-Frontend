@@ -13,7 +13,6 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -21,10 +20,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
-import java.util.stream.IntStream;
 
 public class BluetoothActivity extends AppCompatActivity
 {
@@ -153,7 +149,7 @@ public class BluetoothActivity extends AppCompatActivity
 		{
 			if ( !mScanning )
 			{
-				clearDisconnectedDevices ();
+				unregisterDisconnectedDevices ();
 				scanForDevices ( true );
 			}
 		} );
@@ -175,25 +171,6 @@ public class BluetoothActivity extends AppCompatActivity
 		IntentFilter filter = new IntentFilter ( BluetoothDevice.ACTION_FOUND );
 		filter.addAction ( BluetoothAdapter.ACTION_DISCOVERY_FINISHED );
 		registerReceiver ( mBluetoothReceiver, filter );
-	}
-
-	/**
-	 * Run when the activity resumes, including after onStart.
-	 */
-	@Override
-	protected void onResume () throws SecurityException
-	{
-		/* Resume the superclass */
-		super.onResume ();
-	}
-
-	/**
-	 * When another activity comes into the foreground.
-	 */
-	@Override
-	protected void onPause ()
-	{
-		super.onPause ();
 	}
 
 	/**
@@ -240,9 +217,9 @@ public class BluetoothActivity extends AppCompatActivity
 	/**
 	 * Forget about all currently disconnected devices.
 	 */
-	private void clearDisconnectedDevices ()
+	private void unregisterDisconnectedDevices ()
 	{
-		Device[] devices = mBluetoothService.clearDisconnectedDevices ();
+		Device[] devices = mBluetoothService.unregisterDisconnectedDevices ();
 		mOtherDevicesFragment.removeDevices ( Arrays.asList ( devices ) );
 		for ( Device device : devices )
 			device.unregisterStatusChangeCallback ( mDeviceStatusChangeCallback );
@@ -272,6 +249,7 @@ public class BluetoothActivity extends AppCompatActivity
 	}
 
 
+
 	/**
 	 * @return True iff permissions have already been granted.
 	 */
@@ -298,8 +276,6 @@ public class BluetoothActivity extends AppCompatActivity
 	{
 		ActivityCompat.requestPermissions ( BluetoothActivity.this, REQUIRED_PERMISSIONS, 2 );
 	}
-
-
 
 
 
