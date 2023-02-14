@@ -23,4 +23,7 @@
     <string name="blutooth_service_notification_message">Hello</string>
     <string name="bluetooth_service_notification_title">Accepting Bluetooth Connections</string>
     <string name="bluetooth_service_notification_contents">%1$d Devices Connected</string>
+    <string name="device_name">Device name</string>
+    <string name="device_address">Device address</string>
+    <string name="device_status">Device status</string>
 </resources>

@@ -1,9 +1,11 @@
 package com.dontstopthemusic.dontstopthemusic;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 
@@ -144,15 +146,13 @@ public abstract class BaseDeviceListFragment extends ListFragment
 	 */
 	public void refreshDevices ()
 	{
+		/* Modify the height */
+		this.requireView ().getLayoutParams ().height =
+				mDeviceListAdapter.getContentsHeight ();
+		this.requireView ().requestLayout ();
+
 		/* Notify changes */
 		mDeviceListAdapter.notifyDataSetChanged ();
-
-		/* Modify the height */
-		ViewGroup.LayoutParams params = this.getListView ().getLayoutParams ();
-		this.getListView ().setLayoutParams (
-				new ListView.LayoutParams (
-						params.width,
-						mDeviceListAdapter.getContentsHeight () ) );
 	}
 
 
@@ -300,7 +300,7 @@ public abstract class BaseDeviceListFragment extends ListFragment
 			}
 
 			/* Accumulate the height of the dividers */
-			totalHeight += BaseDeviceListFragment.this.getListView ().getDividerHeight () * ( mDevices.size () - 1 );
+			totalHeight += BaseDeviceListFragment.this.getListView ().getDividerHeight () * Math.max ( 0, mDevices.size () - 1 );
 
 			/* Return the height */
 			return totalHeight;

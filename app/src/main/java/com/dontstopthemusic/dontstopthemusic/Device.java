@@ -147,7 +147,7 @@ public class Device implements Closeable
 	public void connect ()
 	{
 		/* Start connecting in a new thread, if not already connected */
-		if ( !isConnected () && !mConnectionThread.isAlive () )
+		if ( !isConnected () && ( mConnectionThread == null || !mConnectionThread.isAlive () ) )
 			mConnectionThread = new Thread ( () ->
 			{
 				/* State that we are attempting to connect */

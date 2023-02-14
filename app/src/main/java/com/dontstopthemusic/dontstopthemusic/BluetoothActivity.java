@@ -154,9 +154,12 @@ public class BluetoothActivity extends AppCompatActivity
 		/* Create a callback for clicking on a connected device */
 		mConnectedDevicesFragment.setDeviceClickCallback ( device ->
 		{
-			scanForDevices ( false );
-			mBluetoothService.setFocusDevice ( device );
-			startActivity ( new Intent ( BluetoothActivity.this, BluetoothActivity.class ) );
+			if ( device.isConnected () )
+			{
+				scanForDevices ( false );
+				mBluetoothService.setFocusDevice ( device );
+				startActivity ( new Intent ( BluetoothActivity.this, BluetoothActivity.class ) );
+			}
 		} );
 
 		/* Create a click scan callback */
