@@ -19,4 +19,8 @@
     <string name="blutooth_connecting">Connecting</string>
     <string name="bluetooth_disconnected">Disconnected</string>
     <string name="scan">Scan</string>
+    <string name="blutooth_service_notification_name">Don\'t Stop the Music</string>
+    <string name="blutooth_service_notification_message">Hello</string>
+    <string name="bluetooth_service_notification_title">Accepting Bluetooth Connections</string>
+    <string name="bluetooth_service_notification_contents">%1$d Devices Connected</string>
 </resources>

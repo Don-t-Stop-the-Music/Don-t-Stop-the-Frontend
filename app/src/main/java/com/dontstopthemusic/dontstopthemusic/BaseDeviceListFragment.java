@@ -28,7 +28,7 @@ public abstract class BaseDeviceListFragment extends ListFragment
 	private DeviceClickCallback mDeviceClickCallback;
 
 	/* The callback passed to devices to allow them to refresh the list */
-	private final Device.DeviceStatusChangeCallback mDeviceStatusChangeCallback =
+	private final Device.StatusChangeCallback mDeviceStatusChangeCallback =
 			Device -> refreshDevices ();
 
 

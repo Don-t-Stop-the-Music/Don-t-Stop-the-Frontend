@@ -5,12 +5,14 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.util.Log;
+import android.os.IBinder;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -19,7 +21,6 @@ import androidx.core.app.ActivityCompat;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.UUID;
 import java.util.stream.IntStream;
 
 public class BluetoothActivity extends AppCompatActivity
@@ -27,8 +28,11 @@ public class BluetoothActivity extends AppCompatActivity
 	/* The bluetooth adapter */
 	private BluetoothAdapter mBluetoothAdapter;
 
+	/* The Bluetooth service */
+	private BluetoothService mBluetoothService;
+
 	/* The current device fragment */
-	private StatusDeviceListFragment mCurrentDevicesFragment;
+	private StatusDeviceListFragment mConnectedDevicesFragment;
 
 	/* The list of other devices */
 	private SimpleDeviceListFragment mOtherDevicesFragment;
@@ -39,7 +43,11 @@ public class BluetoothActivity extends AppCompatActivity
 	/* The bluetooth device receiver */
 	private final BluetoothDeviceReceiver mBluetoothReceiver = new BluetoothDeviceReceiver ();
 
+	/* A callback for device status changes */
 	private final DeviceStatusChangeCallback mDeviceStatusChangeCallback = new DeviceStatusChangeCallback ();
+
+	/* The connection handler for binding to the Bluetooth service */
+	private final BluetoothServiceConnection mBluetoothServiceConnection = new BluetoothServiceConnection ();
 
 	/* The list of known devices */
 	private final ArrayList<Device> mKnownDevices = new ArrayList<> ();
@@ -52,18 +60,13 @@ public class BluetoothActivity extends AppCompatActivity
 
 
 
-	/* UUIDs */
-	static final UUID BASE_UUID = UUID.fromString ( "00000000-0000-1000-8000-00805F9B34F" );
-	static final UUID RPI_UUID = new UUID ( 0x1e0ca4ea299d4335L, 0x93eb27fcfe7fa848L );
-
-
 	/* Required permissions */
 	static final String[] REQUIRED_PERMISSIONS =
 		{
 				//Manifest.permission.BLUETOOTH_CONNECT,
 				//Manifest.permission.BLUETOOTH_SCAN,
-				//Manifest.permission.ACCESS_FINE_LOCATION,
-				//Manifest.permission.ACCESS_COARSE_LOCATION,
+				Manifest.permission.ACCESS_FINE_LOCATION,
+				Manifest.permission.ACCESS_COARSE_LOCATION,
 				//Manifest.permission.ACCESS_BACKGROUND_LOCATION
 		};
 
@@ -81,6 +84,10 @@ public class BluetoothActivity extends AppCompatActivity
 
 		/* Set up the content view */
 		setContentView ( R.layout.activity_bluetooth );
+
+
+
+		/* BLUETOOTH */
 
 		/* Check that classic bluetooth is supported on the device */
 		if ( !getPackageManager ().hasSystemFeature ( PackageManager.FEATURE_BLUETOOTH ) )
@@ -109,8 +116,27 @@ public class BluetoothActivity extends AppCompatActivity
 			return;
 		}
 
+		/* Register the Bluetooth receiver */
+		IntentFilter filter = new IntentFilter ( BluetoothDevice.ACTION_FOUND );
+		filter.addAction ( BluetoothAdapter.ACTION_DISCOVERY_FINISHED );
+		registerReceiver ( mBluetoothReceiver, filter );
+
+		/* Start the bluetooth service */
+		startForegroundService ( new Intent ( this, BluetoothService.class ) );
+
+		/* Bind to the Bluetooth service */
+		bindService (
+				new Intent ( this, BluetoothService.class ),
+				mBluetoothServiceConnection,
+				Context.BIND_AUTO_CREATE );
+
+
+
+
+		/* SET UP FRAGMENTS AND VIEWS */
+
 		/* Get copies of the fragments */
-		mCurrentDevicesFragment = ( StatusDeviceListFragment ) getSupportFragmentManager ().findFragmentById ( R.id.currentDevice );
+		mConnectedDevicesFragment = ( StatusDeviceListFragment ) getSupportFragmentManager ().findFragmentById ( R.id.currentDevice );
 
 		/* Get copies of the fragments */
 		mOtherDevicesFragment = ( SimpleDeviceListFragment ) getSupportFragmentManager ().findFragmentById ( R.id.otherDevices );
@@ -122,7 +148,15 @@ public class BluetoothActivity extends AppCompatActivity
 		mOtherDevicesFragment.setDeviceClickCallback ( device ->
 		{
 			scanForDevices ( false );
-			device.connect ( RPI_UUID );
+			mBluetoothService.connectToDevice ( device );
+		} );
+
+		/* Create a callback for clicking on a connected device */
+		mConnectedDevicesFragment.setDeviceClickCallback ( device ->
+		{
+			scanForDevices ( false );
+			mBluetoothService.setFocusDevice ( device );
+			startActivity ( new Intent ( BluetoothActivity.this, BluetoothActivity.class ) );
 		} );
 
 		/* Create a click scan callback */
@@ -134,11 +168,6 @@ public class BluetoothActivity extends AppCompatActivity
 				scanForDevices ( true );
 			}
 		} );
-
-		/* Register the Bluetooth receiver */
-		IntentFilter filter = new IntentFilter ( BluetoothDevice.ACTION_FOUND );
-		filter.addAction ( BluetoothAdapter.ACTION_DISCOVERY_FINISHED );
-		registerReceiver ( mBluetoothReceiver, filter );
 	}
 
 
@@ -159,15 +188,26 @@ public class BluetoothActivity extends AppCompatActivity
 		/* Clear the list of other devices */
 		mOtherDevicesFragment.clearDevices ();
 
-		/* Scan! */
+		/* Scan */
 		scanForDevices ( true );
 	}
 
+	/**
+	 * Run once when the activity is destroyed.
+	 */
+	@Override
+	protected void onDestroy ()
+	{
+		/* Destroy the superclass */
+		super.onDestroy ();
 
+		/* Unbind the Bluetooth service */
+		unbindService ( mBluetoothServiceConnection );
+	}
 
 	/**
 	 * @param bluetoothDevice A new BluetoothDevice to register.
-	 * @return Either new Device or an existing mathing Device.
+	 * @return Either new Device or an existing Device.
 	 */
 	private Device registerDevice ( BluetoothDevice bluetoothDevice )
 	{
@@ -192,7 +232,7 @@ public class BluetoothActivity extends AppCompatActivity
 			if ( !device.isConnected () && !device.isConnecting () )
 			{
 				device.unregisterStatusChangeCallback ( mDeviceStatusChangeCallback );
-				mCurrentDevicesFragment.removeDevice ( device );
+				mConnectedDevicesFragment.removeDevice ( device );
 				mOtherDevicesFragment.removeDevice ( device );
 				return true;
 			} else return false;
@@ -252,6 +292,32 @@ public class BluetoothActivity extends AppCompatActivity
 
 
 
+
+
+	/**
+	 * Allows for binding to the Bluetooth service.
+	 */
+	public class BluetoothServiceConnection implements ServiceConnection
+	{
+		@Override
+		public void onServiceDisconnected ( ComponentName component ) {
+			mBluetoothService = null;
+		}
+
+		/**
+		 * @param component Unused
+		 * @param service The service binder (actually an instance of BluetoothService.LocalBinder)
+		 */
+		@Override
+		public void onServiceConnected ( ComponentName component, IBinder service )
+		{
+			BluetoothService.LocalBinder binder = ( BluetoothService.LocalBinder ) service;
+			mBluetoothService = binder.getService();
+		}
+	}
+
+
+
 	/**
 	 * A BroadcastReceiver for new Bluetooth devices
 	 */
@@ -288,21 +354,21 @@ public class BluetoothActivity extends AppCompatActivity
 	/**
 	 * Implementation of Device.DeviceStatusChangeCallback for handling device status changes.
 	 */
-	private class DeviceStatusChangeCallback implements Device.DeviceStatusChangeCallback
+	private class DeviceStatusChangeCallback implements Device.StatusChangeCallback
 	{
 		@Override
-		public void callback ( Device device )
+		public void onStatusChange ( Device device )
 		{
 			runOnUiThread ( () ->
 			{
 				if ( device.isConnecting () || device.isConnected () )
 				{
 					mOtherDevicesFragment.removeDevice ( device );
-					mCurrentDevicesFragment.addDevice ( device );
+					mConnectedDevicesFragment.addDevice ( device );
 				} else
 				{
 					mOtherDevicesFragment.addDevice ( device );
-					mCurrentDevicesFragment.removeDevice ( device );
+					mConnectedDevicesFragment.removeDevice ( device );
 				}
 			} );
 		}
