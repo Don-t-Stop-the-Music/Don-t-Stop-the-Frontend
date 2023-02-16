@@ -19,4 +19,23 @@
     <string name="Debug_silence"> Debug silence </string>
     <string name="Debug_hiss"> Debug hiss </string>
 
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="unknown_device">Unknown Device</string>
+    <string name="bluetooth_not_supported">Bluetooth not supported</string>
+    <string name="no_bluetooth_permissions">Bluetooth permissions not granted</string>
+    <string name="current_device">Current Devices</string>
+    <string name="other_devices">Other Devices</string>
+    <string name="enable_bluetooth">Please enable Bluetooth</string>
+    <string name="bluetooth_connected">Connected</string>
+    <string name="blutooth_connecting">Connecting</string>
+    <string name="bluetooth_disconnected">Disconnected</string>
+    <string name="scan">Scan</string>
+    <string name="blutooth_service_notification_name">Don\'t Stop the Music</string>
+    <string name="blutooth_service_notification_message">Hello</string>
+    <string name="bluetooth_service_notification_title">Accepting Bluetooth Connections</string>
+    <string name="bluetooth_service_notification_contents">%1$d Devices Connected</string>
+    <string name="device_name">Device name</string>
+    <string name="device_address">Device address</string>
+    <string name="device_status">Device status</string>
 </resources>
