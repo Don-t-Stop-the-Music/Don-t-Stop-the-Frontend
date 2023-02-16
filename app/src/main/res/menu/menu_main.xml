@@ -2,6 +2,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.dontstopthemusic.dontstopthemusic.MainActivity">
+
+    <item
+        android:id="@+id/HelpFragment"
+        android:icon="@drawable/baseline_help_24"
+        android:title="@string/Help_button"
+        app:showAsAction="ifRoom"/>
+    <!-- item ID has to be same as fragment id in nav graph -->
+
     <item
         android:id="@+id/action_settings"
         android:orderInCategory="100"

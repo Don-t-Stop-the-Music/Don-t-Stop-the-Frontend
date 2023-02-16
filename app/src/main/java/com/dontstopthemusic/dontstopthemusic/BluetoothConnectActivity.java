@@ -2,6 +2,7 @@ package com.dontstopthemusic.dontstopthemusic;
 
 import android.os.Bundle;
 
+import com.dontstopthemusic.dontstopthemusic.databinding.ActivityBluetoothBinding;
 import com.google.android.material.snackbar.Snackbar;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,31 +20,25 @@ import com.dontstopthemusic.dontstopthemusic.databinding.ActivityMainBinding;
 import android.view.Menu;
 import android.view.MenuItem;
 
-public class MainActivity extends AppCompatActivity {
+public class BluetoothConnectActivity extends AppCompatActivity {
 
     private AppBarConfiguration appBarConfiguration;
-    private ActivityMainBinding binding;
+    private ActivityBluetoothBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        binding = ActivityBluetoothBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         setSupportActionBar(binding.toolbar);
 
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_bluetooth);
         appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
 
-        binding.fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
+
     }
 
     @Override
@@ -58,24 +53,24 @@ public class MainActivity extends AppCompatActivity {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        switch(item.getItemId()){
+        /*switch(item.getItemId()){
             case (R.id.action_settings): {
                 return true;
             }
             case (R.id.HelpFragment): {
-                NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
+                NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_bluetooth);
                 return NavigationUI.onNavDestinationSelected(item,navController)
                         || super.onOptionsItemSelected(item);
             }
             default:
                 return super.onOptionsItemSelected(item);
-        }
-
+        }*/
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
     public boolean onSupportNavigateUp() {
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_bluetooth);
         return NavigationUI.navigateUp(navController, appBarConfiguration)
                 || super.onSupportNavigateUp();
     }

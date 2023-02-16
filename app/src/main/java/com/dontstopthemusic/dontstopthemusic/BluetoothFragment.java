@@ -1,5 +1,6 @@
 package com.dontstopthemusic.dontstopthemusic;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,11 +10,12 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
-import com.dontstopthemusic.dontstopthemusic.databinding.FragmentSecondBinding;
+import com.dontstopthemusic.dontstopthemusic.databinding.FragmentBluetoothBinding;
+import com.dontstopthemusic.dontstopthemusic.databinding.FragmentFirstBinding;
 
-public class SecondFragment extends Fragment {
+public class BluetoothFragment extends Fragment {
 
-    private FragmentSecondBinding binding;
+    private FragmentBluetoothBinding binding;
 
     @Override
     public View onCreateView(
@@ -21,7 +23,7 @@ public class SecondFragment extends Fragment {
             Bundle savedInstanceState
     ) {
 
-        binding = FragmentSecondBinding.inflate(inflater, container, false);
+        binding = FragmentBluetoothBinding.inflate(inflater, container, false);
         return binding.getRoot();
 
     }
@@ -29,19 +31,11 @@ public class SecondFragment extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        binding.buttonSecondPrev.setOnClickListener(new View.OnClickListener() {
+        binding.buttonBluetooth.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                NavHostFragment.findNavController(SecondFragment.this)
-                        .navigate(R.id.action_SecondFragment_to_FirstFragment);
-            }
-        });
-
-        binding.buttonSecondNext.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                NavHostFragment.findNavController(SecondFragment.this)
-                        .navigate(R.id.action_SecondFragment_to_ThirdFragment);
+                Intent intent=new Intent(view.getContext(), MainActivity.class);
+                view.getContext().startActivity(intent);
             }
         });
     }

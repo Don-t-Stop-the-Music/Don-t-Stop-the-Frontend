@@ -10,10 +10,11 @@ import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.dontstopthemusic.dontstopthemusic.databinding.FragmentFirstBinding;
+import com.dontstopthemusic.dontstopthemusic.databinding.FragmentHelpBinding;
 
-public class FirstFragment extends Fragment {
+public class HelpFragment extends Fragment {
 
-    private FragmentFirstBinding binding;
+    private FragmentHelpBinding binding;
 
     @Override
     public View onCreateView(
@@ -21,12 +22,12 @@ public class FirstFragment extends Fragment {
             Bundle savedInstanceState
     ) {
 
-        binding = FragmentFirstBinding.inflate(inflater, container, false);
+        binding = FragmentHelpBinding.inflate(inflater, container, false);
         return binding.getRoot();
 
     }
 
-    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+    /*public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         binding.buttonFirstNext.setOnClickListener(new View.OnClickListener() {
@@ -36,7 +37,7 @@ public class FirstFragment extends Fragment {
                         .navigate(R.id.action_FirstFragment_to_SecondFragment);
             }
         });
-    }
+    }*/
 
     @Override
     public void onDestroyView() {
