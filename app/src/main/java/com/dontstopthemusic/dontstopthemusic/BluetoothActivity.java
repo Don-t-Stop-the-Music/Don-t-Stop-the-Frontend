@@ -140,7 +140,7 @@ public class BluetoothActivity extends AppCompatActivity
 			{
 				scanForDevices ( false );
 				mBluetoothService.setFocusDevice ( device );
-				startActivity ( new Intent ( BluetoothActivity.this, BluetoothActivity.class ) );
+				startActivity ( new Intent ( BluetoothActivity.this, MainActivity.class ) );
 			}
 		} );
 
