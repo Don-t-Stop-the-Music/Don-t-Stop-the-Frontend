@@ -19,11 +19,17 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+import androidx.navigation.ui.AppBarConfiguration;
+import androidx.navigation.ui.NavigationUI;
 
 import java.util.Arrays;
 
 public class BluetoothActivity extends AppCompatActivity
 {
+
+
 	/* The bluetooth adapter */
 	private BluetoothAdapter mBluetoothAdapter;
 
@@ -57,7 +63,7 @@ public class BluetoothActivity extends AppCompatActivity
 	static final String[] REQUIRED_PERMISSIONS =
 		{
 				//Manifest.permission.BLUETOOTH_CONNECT,
-				//Manifest.permission.BLUETOOTH_SCAN,
+				Manifest.permission.BLUETOOTH_SCAN,
 				Manifest.permission.ACCESS_FINE_LOCATION,
 				Manifest.permission.ACCESS_COARSE_LOCATION,
 				//Manifest.permission.ACCESS_BACKGROUND_LOCATION
@@ -153,6 +159,8 @@ public class BluetoothActivity extends AppCompatActivity
 				scanForDevices ( true );
 			}
 		} );
+
+
 	}
 
 	@Override
