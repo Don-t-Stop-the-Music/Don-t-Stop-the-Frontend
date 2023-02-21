@@ -17,7 +17,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Device implements Closeable
+public class Device implements AutoCloseable
 {
 
 	/* The bluetooth device itself */
@@ -220,10 +220,23 @@ public class Device implements Closeable
 	/**
 	 * Notify all subscribers that a status change has occurred.
 	 */
-	private void broadcastStatusChange ()
+	public void broadcastStatusChange ()
 	{
 		for ( StatusChangeCallback callback : mStatusChangeCallbacks )
 			callback.onStatusChange ( this );
+	}
+
+	/**
+	 * Notify all subscribers that a status change has occurred.
+	 */
+	public void broadcastNewData ( JSONObject data )
+	{
+		/* Set the most recent data */
+		mMostRecentData = data;
+
+		/* Run the callbacks */
+		for ( NewDataCallback callback : mNewDataCallbacks )
+			callback.onNewData ( this, mMostRecentData );
 	}
 
 
@@ -243,11 +256,7 @@ public class Device implements Closeable
 				else jsonStr.append ( ( char ) r );
 
 			/* JSONify */
-			mMostRecentData = new JSONObject ( jsonStr.toString () );
-
-			/* Run callbacks */
-			for ( NewDataCallback callback : mNewDataCallbacks )
-				callback.onNewData ( this, mMostRecentData );
+			broadcastNewData ( new JSONObject ( jsonStr.toString () ) );
 		}
 	}
 
