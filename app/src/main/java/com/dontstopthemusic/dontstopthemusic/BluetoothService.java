@@ -43,7 +43,7 @@ public class BluetoothService extends Service
 
 
 	/* The focus device (i.e. the one clicked by the user on the BluetoothActivity page) */
-	private Device mFocusDevice;
+	private Device mFocusDevice = new StubDevice ();
 
 
 
