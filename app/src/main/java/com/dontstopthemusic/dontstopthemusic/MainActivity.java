@@ -12,6 +12,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.IBinder;
+import android.util.Log;
 import android.view.View;
 
 import androidx.navigation.NavController;
@@ -92,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
 
             mDevice = mBluetoothService.getFocusDevice ();
             if ( mDevice == null ) {
-                //finish();
+                finish();
             }
             else {
                 mDevice.registerNewDataCallback(mDeviceNewDataCallback);
@@ -117,7 +118,6 @@ public class MainActivity extends AppCompatActivity {
         public void onNewData (Device device , JSONObject jsonobject)
         {
             //call back data
-
         }
     }
 
