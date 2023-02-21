@@ -7,13 +7,13 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.fragment.NavHostFragment;
 
+import com.dontstopthemusic.dontstopthemusic.databinding.FragmentFourthBinding;
 import com.dontstopthemusic.dontstopthemusic.databinding.FragmentSecondBinding;
 
-public class SecondFragment extends Fragment {
+public class FourthFragment extends Fragment {
 
-    private FragmentSecondBinding binding;
+    private FragmentFourthBinding binding;
 
     @Override
     public View onCreateView(
@@ -21,7 +21,7 @@ public class SecondFragment extends Fragment {
             Bundle savedInstanceState
     ) {
 
-        binding = FragmentSecondBinding.inflate(inflater, container, false);
+        binding = FragmentFourthBinding.inflate(inflater, container, false);
         return binding.getRoot();
 
     }

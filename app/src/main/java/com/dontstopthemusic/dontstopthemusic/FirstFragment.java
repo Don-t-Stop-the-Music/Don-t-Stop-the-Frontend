@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -28,14 +29,31 @@ public class FirstFragment extends Fragment {
 
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        binding.buttonFirstNext.setOnClickListener(new View.OnClickListener() {
+        binding.buttonfirst.setOnClickListener(new View.OnClickListener() {
+            int i=0;
             @Override
             public void onClick(View view) {
-                NavHostFragment.findNavController(FirstFragment.this)
-                        .navigate(R.id.action_FirstFragment_to_SecondFragment);
+                TextView tv1= (TextView) view.getRootView().findViewById(R.id.textview_first);
+                i=i+1;
+                switch (i%4){
+                    case 0:
+                        tv1.setText("xxxx you");
+                        break;
+                    case 1:
+                        tv1.setText("No I told you");
+                        break;
+                    case 2:
+                        tv1.setText("NO");
+                        break;
+                    case 3:
+                        tv1.setText("...");
+                        break;
+                }
+
+
             }
         });
+
     }
 
     @Override

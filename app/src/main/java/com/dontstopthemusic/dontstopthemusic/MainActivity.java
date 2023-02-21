@@ -1,11 +1,17 @@
 package com.dontstopthemusic.dontstopthemusic;
 
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
 
 import com.google.android.material.snackbar.Snackbar;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.IBinder;
 import android.view.View;
 
 import androidx.navigation.NavController;
@@ -19,10 +25,21 @@ import com.dontstopthemusic.dontstopthemusic.databinding.ActivityMainBinding;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import org.json.JSONObject;
+
 public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
+
+    private BluetoothService mBluetoothService;
+    private BluetoothServiceConnection mBluetoothServiceConnection= new BluetoothServiceConnection();
+
+    private Device mDevice;
+
+    private DeviceStatusChangeCallback mDeviceStatusChangeCallback=new DeviceStatusChangeCallback();
+
+    private DeviceNewDataCallback mDeviceNewDataCallback=new DeviceNewDataCallback();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +54,71 @@ public class MainActivity extends AppCompatActivity {
         appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
 
+        /* Bind to the Bluetooth service */
+        bindService (
+                new Intent( this, BluetoothService.class ),
+                mBluetoothServiceConnection,
+                Context.BIND_AUTO_CREATE );
 
+
+    }
+
+    public class BluetoothServiceConnection implements ServiceConnection
+    {
+        /**
+         * @param component Unused
+         */
+        @Override
+        public void onServiceDisconnected ( @Nullable ComponentName component )
+        {
+            /* Theres a small race condition meaning that we may not have actually connected */
+            if ( mBluetoothService != null )
+            {
+                /* Nullify the connection */
+                mBluetoothService = null;
+            }
+        }
+
+        /**
+         * @param component Unused
+         * @param service The service binder (actually an instance of BluetoothService.LocalBinder)
+         */
+        @Override
+        public void onServiceConnected ( ComponentName component, IBinder service )
+        {
+            /* Bind */
+            BluetoothService.LocalBinder binder = ( BluetoothService.LocalBinder ) service;
+            mBluetoothService = binder.getService ();
+
+            mDevice = mBluetoothService.getFocusDevice ();
+            if ( mDevice == null ) {
+                //finish();
+            }
+            else {
+                mDevice.registerNewDataCallback(mDeviceNewDataCallback);
+                mDevice.registerStatusChangeCallback(mDeviceStatusChangeCallback);
+            }
+        }
+    }
+
+    private class DeviceStatusChangeCallback implements Device.StatusChangeCallback
+    {
+        @Override
+        public void onStatusChange ( Device device )
+        {
+            if (!device.isConnected())
+                finish();
+        }
+    }
+
+    private class DeviceNewDataCallback implements Device.NewDataCallback
+    {
+        @Override
+        public void onNewData (Device device , JSONObject jsonobject)
+        {
+            //call back data
+
+        }
     }
 
     @Override
@@ -72,5 +153,14 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         return NavigationUI.navigateUp(navController, appBarConfiguration)
                 || super.onSupportNavigateUp();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if ( mDevice != null ){
+            mDevice.unregisterStatusChangeCallback(mDeviceStatusChangeCallback);
+            mDevice.unregisterNewDataCallback(mDeviceNewDataCallback);
+        }
     }
 }
