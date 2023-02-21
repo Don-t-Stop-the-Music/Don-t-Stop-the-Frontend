@@ -29,11 +29,27 @@ public class ThirdFragment extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        binding.buttonThirdPrev.setOnClickListener(new View.OnClickListener() {
+        binding.buttonDebugFeedback.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                NavHostFragment.findNavController(ThirdFragment.this)
+                        .navigate(R.id.action_ThirdFragment_to_FirstFragment);
+            }
+        });
+
+        binding.buttonDebugSilence.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 NavHostFragment.findNavController(ThirdFragment.this)
                         .navigate(R.id.action_ThirdFragment_to_SecondFragment);
+            }
+        });
+
+        binding.buttonDebugHiss.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                NavHostFragment.findNavController(ThirdFragment.this)
+                        .navigate(R.id.action_ThirdFragment_to_FourthFragment);
             }
         });
     }
