@@ -12,7 +12,7 @@ import org.json.JSONObject;
 public class StubDevice extends Device
 {
 	/** Whether the device is 'connected' */
-	private boolean mConnected = false;
+	private boolean mConnected = true;
 
 
 
