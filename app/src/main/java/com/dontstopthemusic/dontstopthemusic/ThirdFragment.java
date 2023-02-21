@@ -18,6 +18,7 @@ import com.github.mikephil.charting.data.LineDataSet;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class ThirdFragment extends Fragment {
 
@@ -68,17 +69,16 @@ public class ThirdFragment extends Fragment {
         charts.add(chart);
         charts.add(chart2);
 
-        int[] dataObjects = {5, 8, 2, 7, 3, 12, 1};
         List<Entry> entries = new ArrayList<>();
-        int i = 0;
 
-        for (int data : dataObjects) {
-            entries.add(new Entry(i, data));
-            i += 1;
+        for (int j = 0; j < 160; j++) {
+            entries.add(new Entry(j, new Random().nextFloat() * 150));
         }
 
         LineDataSet dataSet = new LineDataSet(entries, "Label");
         dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        dataSet.setDrawValues(false);
+        dataSet.setDrawCircles(false);
         LineData lineData = new LineData(dataSet);
 
         for (LineChart c: charts) {
@@ -87,6 +87,9 @@ public class ThirdFragment extends Fragment {
             c.getXAxis().setDrawGridLines(false);
             c.getAxisLeft().setDrawGridLines(false);
             c.getAxisRight().setDrawGridLines(false);
+            c.getXAxis().setDrawLabels(false);
+            c.getAxisLeft().setDrawLabels(false);
+            c.getAxisRight().setDrawLabels(false);
             c.getDescription().setEnabled(false);
             c.getLegend().setEnabled(false);
             c.invalidate();
