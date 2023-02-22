@@ -13,6 +13,8 @@ import androidx.core.app.NotificationCompat;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class BluetoothService extends Service
@@ -31,6 +33,12 @@ public class BluetoothService extends Service
 
 	/* The foreground service notification */
 	private NotificationCompat.Builder mNotificationBuilder;
+
+	/* The notification manager */
+	private NotificationManager mNotificationManager;
+
+	/* Device status change callback for modifying the notification */
+	private DeviceStatusChangeCallback mDeviceStatusChangeCallback = new DeviceStatusChangeCallback ();
 
 
 
@@ -64,8 +72,8 @@ public class BluetoothService extends Service
 				NotificationManager.IMPORTANCE_DEFAULT );
 
 		/* Register the channel */
-		( ( NotificationManager ) getSystemService ( Activity.NOTIFICATION_SERVICE ) )
-				.createNotificationChannel ( mNotificationChannel );
+		mNotificationManager = ( NotificationManager ) getSystemService ( Activity.NOTIFICATION_SERVICE );
+		mNotificationManager.createNotificationChannel ( mNotificationChannel );
 
 		/* Create the notification intent */
 		mNotificationIntent = PendingIntent.getActivity (
@@ -128,7 +136,11 @@ public class BluetoothService extends Service
 
 		/* Create a new device if a match has not been found */
 		if ( index == mKnownDevices.size () )
-			mKnownDevices.add ( new Device ( bluetoothDevice ) );
+		{
+			Device device = new Device ( bluetoothDevice );
+			mKnownDevices.add ( device );
+			device.registerStatusChangeCallback ( mDeviceStatusChangeCallback );
+		}
 
 		/* Return the index of the device */
 		return mKnownDevices.get ( index );
@@ -141,12 +153,14 @@ public class BluetoothService extends Service
 	 */
 	public Device[] unregisterDisconnectedDevices ()
 	{
-		Device[] devices = mKnownDevices
+		List<Device> devices = mKnownDevices
 				.stream()
 				.filter ( device -> !device.isConnected () && !device.isConnecting () )
-				.toArray ( Device[]::new );
-		mKnownDevices.removeIf ( device -> !device.isConnected () && !device.isConnecting () );
-		return devices;
+				.collect( Collectors.toList() );
+		for ( Device device : devices )
+			device.unregisterStatusChangeCallback ( mDeviceStatusChangeCallback );
+		mKnownDevices.removeAll ( devices );
+		return devices.toArray ( new Device [ 0 ] );
 	}
 
 	/**
@@ -223,6 +237,22 @@ public class BluetoothService extends Service
 			for ( String b : bytes )
 				result = result * 16 + Long.parseLong ( b, 16 );
 			return result;
+		}
+	}
+
+
+
+	/**
+	 * Implementation of Device.DeviceStatusChangeCallback for updating the notification on device changes.
+	 */
+	private class DeviceStatusChangeCallback implements Device.StatusChangeCallback
+	{
+		@Override
+		public void onStatusChange ( Device device )
+		{
+			int connected = mKnownDevices.stream().reduce ( 0, ( Integer u, Device d ) -> d.isConnected () ? u + 1 : u, Integer::sum );
+			mNotificationBuilder.setContentText ( getString ( R.string.bluetooth_service_notification_contents, 0 ) );
+			mNotificationManager.notify ( 1, mNotificationBuilder.build () );
 		}
 	}
 }
