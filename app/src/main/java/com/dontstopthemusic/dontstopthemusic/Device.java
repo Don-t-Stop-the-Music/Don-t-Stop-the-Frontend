@@ -37,6 +37,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 
 
+/**
+ * Represents a Bluetooth device, including its socket.
+ * Thread safe.
+ */
 public class Device implements AutoCloseable
 {
 
@@ -59,14 +63,13 @@ public class Device implements AutoCloseable
 	private JSONObject mMostRecentData;
 
 	/* A set of callbacks for status changes */
-	private final Set<StatusChangeCallback> mStatusChangeCallbacks = new ConcurrentHashMap<StatusChangeCallback, Device> ().keySet ( this );
+	private final Set<StatusChangeCallback> mStatusChangeCallbacks = new HashSet<> ();
 
 	/* A set of callbacks for new data */
-	private final Set<NewDataCallback> mNewDataCallbacks = new ConcurrentHashMap<NewDataCallback, Device> ().keySet ( this );
+	private final Set<NewDataCallback> mNewDataCallbacks = new HashSet<> ();
 
 
-	/* UUIDs */
-	static final UUID BASE_UUID = UUID.fromString ( "00000000-0000-1000-8000-00805F9B34F" );
+	/* UUID */
 	static final UUID RPI_UUID = new UUID ( 0x1e0ca4ea299d4335L, 0x93eb27fcfe7fa848L );
 
 
@@ -100,17 +103,9 @@ public class Device implements AutoCloseable
 	}
 
 	/**
-	 * @return The internal BluetoothSocket instance.
-	 */
-	public BluetoothSocket getSocket ()
-	{
-		return mBluetoothSocket;
-	}
-
-	/**
 	 * @return Whether the device is currently connected.
 	 */
-	public boolean isConnected ()
+	public synchronized boolean isConnected ()
 	{
 		return mBluetoothSocket != null && mBluetoothSocket.isConnected ();
 	}
@@ -130,8 +125,11 @@ public class Device implements AutoCloseable
 	 */
 	public void registerStatusChangeCallback ( StatusChangeCallback callback )
 	{
-		mStatusChangeCallbacks.add ( callback );
-		callback.onStatusChange ( this );
+		synchronized ( mStatusChangeCallbacks )
+		{
+			mStatusChangeCallbacks.add ( callback );
+			callback.onStatusChange ( this );
+		}
 	}
 
 	/**
@@ -139,7 +137,10 @@ public class Device implements AutoCloseable
 	 */
 	public void unregisterStatusChangeCallback ( StatusChangeCallback callback )
 	{
-		mStatusChangeCallbacks.remove ( callback );
+		synchronized ( mStatusChangeCallbacks )
+		{
+			mStatusChangeCallbacks.remove ( callback );
+		}
 	}
 
 	/**
@@ -148,8 +149,11 @@ public class Device implements AutoCloseable
 	 */
 	public void registerNewDataCallback ( NewDataCallback callback )
 	{
-		mNewDataCallbacks.add ( callback );
-		callback.onNewData ( this, mMostRecentData );
+		synchronized ( mNewDataCallbacks )
+		{
+			mNewDataCallbacks.add ( callback );
+			callback.onNewData ( this, mMostRecentData );
+		}
 	}
 
 	/**
@@ -157,7 +161,10 @@ public class Device implements AutoCloseable
 	 */
 	public void unregisterNewDataCallback ( NewDataCallback callback )
 	{
-		mNewDataCallbacks.remove ( callback );
+		synchronized ( mNewDataCallbacks )
+		{
+			mNewDataCallbacks.remove ( callback );
+		}
 	}
 
 
@@ -242,8 +249,11 @@ public class Device implements AutoCloseable
 	 */
 	public void broadcastStatusChange ()
 	{
-		for ( StatusChangeCallback callback : mStatusChangeCallbacks )
-			callback.onStatusChange ( this );
+		synchronized ( mStatusChangeCallbacks )
+		{
+			for ( StatusChangeCallback callback : mStatusChangeCallbacks )
+				callback.onStatusChange ( this );
+		}
 	}
 
 	/**
@@ -251,12 +261,15 @@ public class Device implements AutoCloseable
 	 */
 	public void broadcastNewData ( JSONObject data )
 	{
-		/* Set the most recent data */
-		mMostRecentData = data;
+		synchronized ( mNewDataCallbacks )
+		{
+			/* Set the most recent data */
+			mMostRecentData = data;
 
-		/* Run the callbacks */
-		for ( NewDataCallback callback : mNewDataCallbacks )
-			callback.onNewData ( this, mMostRecentData );
+			/* Run the callbacks */
+			for ( NewDataCallback callback : mNewDataCallbacks )
+				callback.onNewData ( this, mMostRecentData );
+		}
 	}
 
 
