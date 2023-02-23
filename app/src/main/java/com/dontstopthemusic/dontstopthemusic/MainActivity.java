@@ -42,6 +42,8 @@ public class MainActivity extends AppCompatActivity {
 
     private DeviceNewDataCallback mDeviceNewDataCallback=new DeviceNewDataCallback();
 
+    private static JSONObject MostUpdatedJson;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -117,8 +119,14 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onNewData (Device device , JSONObject jsonobject)
         {
-            //call back data
+            //callback data
+            MostUpdatedJson=jsonobject;
+
         }
+    }
+
+    public static JSONObject getUpdatedJson(){
+        return MostUpdatedJson;
     }
 
     @Override
