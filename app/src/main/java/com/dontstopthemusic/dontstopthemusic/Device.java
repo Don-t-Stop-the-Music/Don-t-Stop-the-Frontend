@@ -17,6 +17,26 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+
+/** The data format is as follows:
+
+ {
+ 	"frequency": [
+		0: Array 	// Uniformly distributed samples of frequency between minFrequency and maxFrequency
+ 		1: Array
+ 	],
+ 	"minFrequency": Int,
+ 	"maxFrequency": Int,
+ 	"hiss": [
+ 		0: Boolean
+ 		1: Boolean
+ 	],
+ 	"feedback": TBC
+ }
+
+ */
+
+
 public class Device implements AutoCloseable
 {
 
