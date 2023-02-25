@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.widget.Button;
@@ -24,6 +25,8 @@ import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
+import java.security.Permission;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class BluetoothActivity extends AppCompatActivity
@@ -56,18 +59,6 @@ public class BluetoothActivity extends AppCompatActivity
 
 	/* Whether bluetooth is currently scanning */
 	boolean mScanning;
-
-
-
-	/* Required permissions */
-	static final String[] REQUIRED_PERMISSIONS =
-		{
-				//Manifest.permission.BLUETOOTH_CONNECT,
-				Manifest.permission.BLUETOOTH_SCAN,
-				Manifest.permission.ACCESS_FINE_LOCATION,
-				Manifest.permission.ACCESS_COARSE_LOCATION,
-				//Manifest.permission.ACCESS_BACKGROUND_LOCATION
-		};
 
 
 
@@ -264,11 +255,14 @@ public class BluetoothActivity extends AppCompatActivity
 	private boolean checkBluetoothPermissions ()
 	{
 		boolean granted = true;
-		for ( String p : REQUIRED_PERMISSIONS  )
+		for ( String p : requiredBluetoothPermissions ()  )
 			granted &= ActivityCompat.checkSelfPermission ( this, p ) == PackageManager.PERMISSION_GRANTED;
 		return granted;
 	}
 
+	/**
+	 * @return True iff the required Bluetooth permissions have been granted.
+	 */
 	private boolean checkBluetoothEnabled ()
 	{
 		boolean enabled = mBluetoothAdapter.isEnabled ();
@@ -278,12 +272,32 @@ public class BluetoothActivity extends AppCompatActivity
 	}
 
 	/**
-	 *
+	 * Request the required Bluetooth permissions
 	 */
 	private void requestBluetoothPermissions ()
 	{
-		ActivityCompat.requestPermissions ( BluetoothActivity.this, REQUIRED_PERMISSIONS, 2 );
+		ActivityCompat.requestPermissions ( BluetoothActivity.this, requiredBluetoothPermissions (), 2 );
 	}
+
+	/**
+	 * Get Bluetooth permissions based on SDK version
+	 */
+	private String[] requiredBluetoothPermissions ()
+	{
+		ArrayList<String> permissions = new ArrayList<> ();
+		permissions.add ( Manifest.permission.ACCESS_FINE_LOCATION );
+		permissions.add ( Manifest.permission.ACCESS_COARSE_LOCATION );
+		if ( Build.VERSION.SDK_INT >= 31 )
+		{
+			permissions.add ( Manifest.permission.ACCESS_FINE_LOCATION );
+			permissions.add ( Manifest.permission.BLUETOOTH_CONNECT );
+		}
+		if ( Build.VERSION.SDK_INT >= 29 )
+		{
+			permissions.add ( Manifest.permission.ACCESS_BACKGROUND_LOCATION );
+		}
+		return permissions.toArray ( new String [ 0 ] );
+	};
 
 
 

@@ -8,11 +8,14 @@ import android.app.Service;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.os.Binder;
+import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class BluetoothService extends Service
@@ -24,13 +27,15 @@ public class BluetoothService extends Service
 	/* The notification channel */
 	private static final String CHANNEL_ID = "BluetoothChannel";
 	private static final String CHANNEL_DESC = "Bluetooth foreground service notification";
-	private NotificationChannel mNotificationChannel;
-
-	/* The notification intent */
-	private PendingIntent mNotificationIntent;
 
 	/* The foreground service notification */
 	private NotificationCompat.Builder mNotificationBuilder;
+
+	/* The notification manager */
+	private NotificationManager mNotificationManager;
+
+	/* Device status change callback for modifying the notification */
+	private DeviceStatusChangeCallback mDeviceStatusChangeCallback = new DeviceStatusChangeCallback ();
 
 
 
@@ -46,11 +51,6 @@ public class BluetoothService extends Service
 	private Device mFocusDevice = new StubDevice ();
 
 
-
-	/* Whether the service is running */
-	private static boolean mIsRunning = false;
-
-
 	@Override
 	public void onCreate ()
 	{
@@ -58,26 +58,28 @@ public class BluetoothService extends Service
 		super.onCreate ();
 
 		/* Create the notification channel */
-		mNotificationChannel = new NotificationChannel (
+		NotificationChannel mNotificationChannel = new NotificationChannel (
 				BluetoothService.CHANNEL_ID,
 				BluetoothService.CHANNEL_DESC,
 				NotificationManager.IMPORTANCE_DEFAULT );
 
 		/* Register the channel */
-		( ( NotificationManager ) getSystemService ( Activity.NOTIFICATION_SERVICE ) )
-				.createNotificationChannel ( mNotificationChannel );
+		mNotificationManager = ( NotificationManager ) getSystemService ( Activity.NOTIFICATION_SERVICE );
+		mNotificationManager.createNotificationChannel ( mNotificationChannel );
 
 		/* Create the notification intent */
-		mNotificationIntent = PendingIntent.getActivity (
-			this,
-			0,
-			new Intent ( this, BluetoothService.class ),
-			PendingIntent.FLAG_IMMUTABLE );
+		/* The notification intent */
+		PendingIntent mNotificationIntent = PendingIntent.getActivity (
+				this,
+				0,
+				new Intent ( this, BluetoothService.class ),
+				PendingIntent.FLAG_IMMUTABLE );
 
 		/* Create the notification builder */
 		mNotificationBuilder = new NotificationCompat.Builder ( this, CHANNEL_ID )
 				.setContentTitle ( getString ( R.string.bluetooth_service_notification_title ) )
 				.setContentIntent ( mNotificationIntent )
+				.setSmallIcon ( R.drawable.ic_launcher_foreground )
 				.setContentText ( getString ( R.string.bluetooth_service_notification_contents, 0 ) );
 
 		/* Start as a foreground service */
@@ -91,7 +93,6 @@ public class BluetoothService extends Service
 		super.onStartCommand ( intent, flags, startID );
 
 		/* This is not a sticky service */
-		mIsRunning = true;
 		return START_NOT_STICKY;
 	}
 
@@ -105,13 +106,6 @@ public class BluetoothService extends Service
 		return mBinder;
 	}
 
-	@Override
-	public void onDestroy ()
-	{
-		super.onDestroy ();
-		mIsRunning = false;
-	}
-
 
 
 	/**
@@ -120,18 +114,25 @@ public class BluetoothService extends Service
 	 */
 	public Device registerDevice ( BluetoothDevice bluetoothDevice )
 	{
-		/* Try to find a matching device */
-		int index = IntStream.range ( 0, mKnownDevices.size () )
-				.filter ( i -> mDeviceComparator.compare ( mKnownDevices.get ( i ).getInfo (), bluetoothDevice ) == 0 )
-				.findFirst ()
-				.orElse ( mKnownDevices.size () );
+		synchronized ( mKnownDevices )
+		{
+			/* Try to find a matching device */
+			int index = IntStream.range ( 0, mKnownDevices.size () )
+					.filter ( i -> mDeviceComparator.compare ( mKnownDevices.get ( i ).getInfo (), bluetoothDevice ) == 0 )
+					.findFirst ()
+					.orElse ( mKnownDevices.size () );
 
-		/* Create a new device if a match has not been found */
-		if ( index == mKnownDevices.size () )
-			mKnownDevices.add ( new Device ( bluetoothDevice ) );
+			/* Create a new device if a match has not been found */
+			if ( index == mKnownDevices.size () )
+			{
+				Device device = new Device ( bluetoothDevice );
+				mKnownDevices.add ( device );
+				device.registerStatusChangeCallback ( mDeviceStatusChangeCallback );
+			}
 
-		/* Return the index of the device */
-		return mKnownDevices.get ( index );
+			/* Return the index of the device */
+			return mKnownDevices.get ( index );
+		}
 	}
 
 	/**
@@ -141,12 +142,17 @@ public class BluetoothService extends Service
 	 */
 	public Device[] unregisterDisconnectedDevices ()
 	{
-		Device[] devices = mKnownDevices
-				.stream()
-				.filter ( device -> !device.isConnected () && !device.isConnecting () )
-				.toArray ( Device[]::new );
-		mKnownDevices.removeIf ( device -> !device.isConnected () && !device.isConnecting () );
-		return devices;
+		synchronized ( mKnownDevices )
+		{
+			List<Device> devices = mKnownDevices
+					.stream ()
+					.filter ( device -> !device.isConnected () && !device.isConnecting () )
+					.collect ( Collectors.toList () );
+			for ( Device device : devices )
+				device.unregisterStatusChangeCallback ( mDeviceStatusChangeCallback );
+			mKnownDevices.removeAll ( devices );
+			return devices.toArray ( new Device[ 0 ] );
+		}
 	}
 
 	/**
@@ -165,20 +171,17 @@ public class BluetoothService extends Service
 	/**
 	 * @param device The device to set as the focus
 	 */
-	public void setFocusDevice ( Device device ) { mFocusDevice = device; }
+	public void setFocusDevice ( Device device )
+	{
+		if ( mFocusDevice instanceof StubDevice )
+			mFocusDevice.close ();
+		mFocusDevice = device;
+	}
 
 	/**
 	 * @return The device currently in focus, or null if a device is not in focus.
 	 */
-	public Device getFocusDevice () { return mFocusDevice; }
-
-	/**
-	 * @return Whether the process is running.
-	 */
-	public static boolean isRunning ()
-	{
-		return mIsRunning;
-	}
+	public Device getFocusDevice () { return mFocusDevice;	}
 
 
 
@@ -223,6 +226,25 @@ public class BluetoothService extends Service
 			for ( String b : bytes )
 				result = result * 16 + Long.parseLong ( b, 16 );
 			return result;
+		}
+	}
+
+
+
+	/**
+	 * Implementation of Device.DeviceStatusChangeCallback for updating the notification on device changes.
+	 */
+	private class DeviceStatusChangeCallback implements Device.StatusChangeCallback
+	{
+		@Override
+		public void onStatusChange ( Device device )
+		{
+			synchronized ( mNotificationBuilder )
+			{
+				int connected = mKnownDevices.stream ().reduce ( 0, ( Integer u, Device d ) -> d.isConnected () ? u + 1 : u, Integer::sum );
+				mNotificationBuilder.setContentText ( getString ( R.string.bluetooth_service_notification_contents, connected ) );
+				mNotificationManager.notify ( 1, mNotificationBuilder.build () );
+			}
 		}
 	}
 }
