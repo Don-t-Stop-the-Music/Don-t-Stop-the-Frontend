@@ -44,16 +44,16 @@
             android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.DontStopTheMusic.NoActionBar">
-        </activity>
-        <activity
-            android:name=".BluetoothActivity"
-            android:exported="true"
-            android:theme="@style/Theme.DontStopTheMusic.NoActionBar">
             <!--shuffle this to specify starting activity-->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".BluetoothActivity"
+            android:exported="true"
+            android:theme="@style/Theme.DontStopTheMusic.NoActionBar">
         </activity>
 
     </application>
