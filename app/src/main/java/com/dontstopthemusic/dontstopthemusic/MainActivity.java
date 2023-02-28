@@ -15,6 +15,7 @@ import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
 
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
@@ -32,11 +33,10 @@ public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
+    private DeviceViewModel viewModel;
 
     private BluetoothService mBluetoothService;
     private BluetoothServiceConnection mBluetoothServiceConnection= new BluetoothServiceConnection();
-
-    private Device mDevice;
 
     private DeviceStatusChangeCallback mDeviceStatusChangeCallback=new DeviceStatusChangeCallback();
 
@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        viewModel = new ViewModelProvider(this).get(DeviceViewModel.class);
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -93,13 +94,14 @@ public class MainActivity extends AppCompatActivity {
             BluetoothService.LocalBinder binder = ( BluetoothService.LocalBinder ) service;
             mBluetoothService = binder.getService ();
 
-            mDevice = mBluetoothService.getFocusDevice ();
-            if ( mDevice == null ) {
+            viewModel.assignDevice(mBluetoothService);
+
+            if (viewModel.isNull()) {
                 finish();
             }
             else {
-                mDevice.registerNewDataCallback(mDeviceNewDataCallback);
-                mDevice.registerStatusChangeCallback(mDeviceStatusChangeCallback);
+                viewModel.registerNewDataCallback(mDeviceNewDataCallback);
+                viewModel.registerStatusChangeCallback(mDeviceStatusChangeCallback);
             }
         }
     }
@@ -166,9 +168,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if ( mDevice != null ){
-            mDevice.unregisterStatusChangeCallback(mDeviceStatusChangeCallback);
-            mDevice.unregisterNewDataCallback(mDeviceNewDataCallback);
+        if (viewModel.isNull()){
+            viewModel.unregisterStatusChangeCallback(mDeviceStatusChangeCallback);
+            viewModel.unregisterNewDataCallback(mDeviceNewDataCallback);
         }
     }
 }
