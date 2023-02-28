@@ -30,7 +30,7 @@ import java.util.Map;
 public class ThirdFragment extends Fragment {
 
     private FragmentThirdBinding binding;
-    private DeviceViewModel viewModel;
+    private DeviceViewModel tDevice;
     private DeviceNewDataCallback tDeviceNewDataCallback = new DeviceNewDataCallback();
 
     @Override
@@ -114,14 +114,23 @@ public class ThirdFragment extends Fragment {
         }
     }
 
-
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        viewModel = new ViewModelProvider(requireActivity()).get(DeviceViewModel.class);
+        tDevice = new ViewModelProvider(requireActivity()).get(DeviceViewModel.class);
 
-        if (viewModel.isConnected()) {
-            viewModel.registerNewDataCallback(tDeviceNewDataCallback);
-        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if (tDevice.isConnected()) {
+                    tDevice.registerNewDataCallback(tDeviceNewDataCallback);
+                }
+            }
+        }).start();
 
         binding.buttonDebugFeedback.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -150,7 +159,7 @@ public class ThirdFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
-        viewModel.unregisterNewDataCallback(tDeviceNewDataCallback);
+        tDevice.unregisterNewDataCallback(tDeviceNewDataCallback);
         super.onDestroyView();
         binding = null;
     }
