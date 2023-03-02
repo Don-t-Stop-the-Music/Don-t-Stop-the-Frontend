@@ -15,8 +15,6 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.dontstopthemusic.dontstopthemusic.databinding.FragmentFirstBinding;
 
-import com.dontstopthemusic.dontstopthemusic.FirstFragment.FeedbackStates;
-
 import org.json.JSONObject;
 
 import com.dontstopthemusic.dontstopthemusic.MainActivity;
@@ -26,7 +24,7 @@ public class FirstFragment extends Fragment {
     private FragmentFirstBinding binding;
 
 
-    public enum FeedbackStates{
+    enum FeedbackStates{
         ZERO_Init,
         ONE_PlugMonitorOut,
         TWO_HitPFL,
@@ -41,8 +39,6 @@ public class FirstFragment extends Fragment {
 
     private FeedbackStates current_state=FeedbackStates.ZERO_Init;
     private int current_channel=0;
-    int cont_debug=-1;
-
 
     //lots of placeholder variables for testing
     float[] TEST_monitorFeedback ={100,0};
@@ -87,6 +83,9 @@ public class FirstFragment extends Fragment {
             public void onClick(View view) {
                 TextView tv1= (TextView) view.getRootView().findViewById(R.id.textview_first);
                 Button buttonFirst= (Button) view.getRootView().findViewById(R.id.buttonfirst);
+
+                //get update-st copy of json
+                localJson=MainActivity.getUpdatedJson();
                 switch (current_state){
                     case ZERO_Init: {
                         current_state=FeedbackStates.ONE_PlugMonitorOut;
