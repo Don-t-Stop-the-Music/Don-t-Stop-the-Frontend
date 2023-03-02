@@ -6,18 +6,14 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 
-import com.google.android.material.snackbar.Snackbar;
-
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.IBinder;
-import android.util.Log;
-import android.view.View;
 
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
-import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
@@ -32,19 +28,21 @@ public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
+    private DeviceViewModel mDevice;
 
     private BluetoothService mBluetoothService;
     private BluetoothServiceConnection mBluetoothServiceConnection= new BluetoothServiceConnection();
-
-    private Device mDevice;
 
     private DeviceStatusChangeCallback mDeviceStatusChangeCallback=new DeviceStatusChangeCallback();
 
     private DeviceNewDataCallback mDeviceNewDataCallback=new DeviceNewDataCallback();
 
+    private static JSONObject MostUpdatedJson;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mDevice = new ViewModelProvider(this).get(DeviceViewModel.class);
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -91,8 +89,9 @@ public class MainActivity extends AppCompatActivity {
             BluetoothService.LocalBinder binder = ( BluetoothService.LocalBinder ) service;
             mBluetoothService = binder.getService ();
 
-            mDevice = mBluetoothService.getFocusDevice ();
-            if ( mDevice == null ) {
+            mDevice.assignDevice(mBluetoothService);
+
+            if (mDevice.isNull()) {
                 finish();
             }
             else {
@@ -117,8 +116,14 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onNewData (Device device , JSONObject jsonobject)
         {
-            //call back data
+            //callback data
+            MostUpdatedJson=jsonobject;
+
         }
+    }
+
+    public static JSONObject getUpdatedJson(){
+        return MostUpdatedJson;
     }
 
     @Override
@@ -158,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if ( mDevice != null ){
+        if (mDevice.isNull()){
             mDevice.unregisterStatusChangeCallback(mDeviceStatusChangeCallback);
             mDevice.unregisterNewDataCallback(mDeviceNewDataCallback);
         }
