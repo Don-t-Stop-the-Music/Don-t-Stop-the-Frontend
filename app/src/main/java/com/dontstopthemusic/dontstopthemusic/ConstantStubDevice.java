@@ -35,7 +35,7 @@ public class ConstantStubDevice extends StubDevice
 		for ( int i = 0; i < 160; ++i )
 		{
 			freqData1.put ( Math.pow ( Math.sin ( i / Math.PI ), 2 ) );
-			freqData1.put ( Math.pow ( Math.cos ( i / ( 2 * Math.PI ) ), 2 ) );
+			freqData2.put ( Math.pow ( Math.cos ( i / ( 2 * Math.PI ) ), 2 ) );
 		}
 
 		/* Set hiss */
