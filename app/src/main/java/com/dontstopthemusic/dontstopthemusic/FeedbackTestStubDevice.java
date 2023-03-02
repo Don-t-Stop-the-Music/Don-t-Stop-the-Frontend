@@ -62,7 +62,7 @@ public class FeedbackTestStubDevice extends StubDevice
 		for ( int i = 0; i < 160; ++i )
 		{
 			freqData1.put ( 0 );
-			freqData1.put ( 0 );
+			freqData2.put ( 0 );
 		}
 
 		/* Set hiss */
