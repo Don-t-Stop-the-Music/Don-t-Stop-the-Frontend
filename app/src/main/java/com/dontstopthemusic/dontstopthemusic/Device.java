@@ -131,7 +131,8 @@ public class Device implements AutoCloseable
 		synchronized ( mStatusChangeCallbacks )
 		{
 			mStatusChangeCallbacks.add ( callback );
-			callback.onStatusChange ( this );
+			if ( mMostRecentData != null )
+				callback.onStatusChange ( this );
 		}
 	}
 
