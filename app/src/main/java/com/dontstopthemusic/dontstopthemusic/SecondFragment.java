@@ -1,9 +1,13 @@
 package com.dontstopthemusic.dontstopthemusic;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -11,9 +15,31 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.dontstopthemusic.dontstopthemusic.databinding.FragmentSecondBinding;
 
+import org.json.JSONObject;
+
+
+
 public class SecondFragment extends Fragment {
 
     private FragmentSecondBinding binding;
+
+    enum SilenceStates{
+        ZERO_init,
+        ONE_MF,
+        TWO_slider,
+        THREE_ST,
+        FOUR_whichchannel,
+        FIVE_plugPFL,
+        SIX_gain,
+        SEVEN_EQ,
+        EIGHT_mic,
+        NINE_pluggedin,
+        TEN_dontknow,
+        ELEVEN_giveup,
+        TWELVE_end
+    }
+    private SilenceStates current_state= SilenceStates.ZERO_init;
+    private int current_channel=-1;
 
     @Override
     public View onCreateView(
@@ -28,6 +54,153 @@ public class SecondFragment extends Fragment {
 
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        DialogInterface.OnClickListener dialogClickListener=new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                switch(i){
+                    case DialogInterface.BUTTON_POSITIVE:{
+                        current_state=SilenceStates.FIVE_plugPFL;
+                        current_channel=0; //"that"
+                        break;
+                    }
+                    case DialogInterface.BUTTON_NEGATIVE:{
+                        current_state=SilenceStates.TEN_dontknow;
+                        current_channel=1;
+                        break;
+                    }
+                }
+            }
+        };
+        binding.buttonsecond.setOnClickListener(new View.OnClickListener() {
+
+            JSONObject localJson=MainActivity.getUpdatedJson();
+
+            @Override
+            public void onClick(View view) {
+                TextView tv2= (TextView) view.getRootView().findViewById(R.id.textview_second);
+                Button buttonSecond= (Button) view.getRootView().findViewById(R.id.buttonsecond);
+
+                //get update-st copy of json
+                localJson=MainActivity.getUpdatedJson();
+                int no_sound=1;//to fix
+
+                switch (current_state){
+                    case ZERO_init:{
+                        buttonSecond.setText("Next");
+                        if (no_sound==1){
+                            current_state=SilenceStates.ONE_MF;
+                            tv2.setText("We cannot detect any sound. Is the Master Fader up?");
+                        }
+                        else{
+                            current_state=SilenceStates.TWO_slider;
+                            tv2.setText("Check that the fader is up and the on buttons are on on all channels.");
+                        }
+                        break;
+                    }
+                    case ONE_MF:{
+                        current_state=SilenceStates.TWO_slider;
+                        tv2.setText("Check that the fader is up and the on buttons are on on all channels.");
+                        break;
+                    }
+                    case TWO_slider:{
+                        current_state=SilenceStates.THREE_ST;
+                        tv2.setText("Check that the ST button is on.");
+                        break;
+                    }
+                    case THREE_ST:{
+                        current_state=SilenceStates.FOUR_whichchannel;
+                        AlertDialog.Builder builder = new AlertDialog.Builder(view.getRootView().getContext());
+                        builder.setMessage("Do you know which channel might be silent?").setPositiveButton("Yes", dialogClickListener).setNegativeButton("No", dialogClickListener).setCancelable(false).show();
+                        tv2.setText("Press next to continue");
+
+                        break;
+                    }
+                    case FOUR_whichchannel:{
+                        tv2.setText("ERRORRRR 4");
+                        break;
+                    }
+                    case FIVE_plugPFL:{
+                        current_state=SilenceStates.SIX_gain;
+                        String text="channel "+current_channel;
+                        if (current_channel==0){
+                            text="the problem channel";
+                        }
+                        String prep="Plug into monitor out.";
+                        if (current_channel>1){
+                            prep="Unhit PFL for channel "+(current_channel-1)+".";
+                        }
+                        tv2.setText(prep+"Hit PFL for "+text+".");
+                        break;
+                    }
+                    case SIX_gain:{
+                        current_state=SilenceStates.SEVEN_EQ;
+                        String text="channel "+current_channel;
+                        if (current_channel==0){
+                            text="the problem channel";
+                        }
+                        tv2.setText("Try turning up the gain knob for "+text+". If it didn't fix it, turn it back down to its previous settings.");
+                        break;
+                    }
+                    case SEVEN_EQ:{
+                        current_state=SilenceStates.EIGHT_mic;
+                        if (current_channel>1){
+                            current_state=SilenceStates.NINE_pluggedin;
+                        }
+                        String text="channel "+current_channel;
+                        if (current_channel==0){
+                            text="the problem channel";
+                        }
+                        tv2.setText("Try turning all three EQ knobs to the middle position for "+text+". If that didn't fix it, turn them all back to their previous positions.");
+                        break;
+                    }
+                    case EIGHT_mic:{
+                        current_state=SilenceStates.NINE_pluggedin;
+                        if ((current_channel==0)||(current_channel==1)){
+                            tv2.setText("Are you using a mic? If yes, check that phantom power is on.");
+                        }
+                        break;
+                    }
+                    case NINE_pluggedin:{
+                        String text="channel "+current_channel;
+                        if (current_channel==0){
+                            text="the problem channel";
+                        }
+                        current_state=SilenceStates.ELEVEN_giveup;
+                        tv2.setText("Check if things plugged in correctly for "+text+"?");
+                        break;
+                    }
+                    case TEN_dontknow:{
+                        current_state=SilenceStates.FIVE_plugPFL;
+                        tv2.setText("The following actions might mess up your current settings. Press next if you want to proceed and check through all the channels.");
+                        break;
+                    }
+                    case ELEVEN_giveup:{
+                        if (current_channel==0||current_channel==8){
+                            buttonSecond.setText("End debug silence");
+                            tv2.setText("We don't think it is an issue of the sound board. Try checking other connections instead.");
+                            current_state=SilenceStates.TWELVE_end;
+                        }
+                        else{
+                            tv2.setText("Moving on to next channel...");
+                            current_channel++;
+                            current_state=SilenceStates.FIVE_plugPFL;
+                        }
+                        break;
+                    }
+                    case TWELVE_end:{
+                        NavHostFragment.findNavController(SecondFragment.this)
+                                .navigate(R.id.action_SecondFragment_to_ThirdFragment);
+                        break;
+                    }
+                }
+
+
+            }
+
+
+        });
 
     }
 

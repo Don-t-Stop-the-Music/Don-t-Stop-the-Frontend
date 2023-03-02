@@ -31,7 +31,10 @@ import java.util.concurrent.ConcurrentHashMap;
  		0: Boolean
  		1: Boolean
  	],
- 	"feedback": TBC
+ 	"feedback": [
+ 		0: Array   // Arbitrary size, specifying which frequencies are feedbacks
+ 		1: Array
+ 	]
  }
 
  */
