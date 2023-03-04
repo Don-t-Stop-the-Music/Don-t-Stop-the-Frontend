@@ -15,6 +15,8 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.dontstopthemusic.dontstopthemusic.databinding.FragmentFirstBinding;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.dontstopthemusic.dontstopthemusic.MainActivity;
@@ -41,8 +43,8 @@ public class FirstFragment extends Fragment {
     private int current_channel=0;
 
     //lots of placeholder variables for testing
-    float[] TEST_monitorFeedback ={100,0};
-    float[] TEST_stereoFeedback={};
+    JSONArray TEST_monitorFeedback;
+    JSONArray TEST_stereoFeedback;
 
 
 
@@ -86,10 +88,16 @@ public class FirstFragment extends Fragment {
 
                 //get update-st copy of json
                 localJson=MainActivity.getUpdatedJson();
+                try {
+                    TEST_monitorFeedback=localJson.getJSONArray("feedback").getJSONArray(1);
+                    TEST_stereoFeedback=localJson.getJSONArray("feedback").getJSONArray(0);
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
+                }
                 switch (current_state){
                     case ZERO_Init: {
                         current_state=FeedbackStates.ONE_PlugMonitorOut;
-                        tv1.setText("Plug into monitor out");
+                        tv1.setText("Plug into monitor out");//"Plug into monitor out"
                         buttonFirst.setText("Next");
                         break;
                     }
@@ -102,12 +110,31 @@ public class FirstFragment extends Fragment {
                         break;
                     }
                     case TWO_HitPFL:{
-                        if (!(TEST_monitorFeedback.length==0)){
+                        if (!(TEST_monitorFeedback.length()==0)){
                             //feedback exists in this channel
                             current_state=FeedbackStates.THREE_CheckFreqRange;
                             //stuff happens to determine the problem area
-                            String problem_area="HIGH";
-                            tv1.setText("We have found a potential problem channel. The feedback is centered around the "+problem_area+" range. Try turning down the "+problem_area+" knob.");
+                            int average=0; //brute ugly average
+                            for (int i=0;i<TEST_monitorFeedback.length();i++){
+                                try {
+                                    average=average+TEST_monitorFeedback.getInt(i);
+                                } catch (JSONException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }
+                            average=average/TEST_monitorFeedback.length();
+                            //tv1.setText("average is "+average);
+                            String problem_area="ERROR";
+                            if (average>8000){
+                                problem_area="HIGH";
+                            }
+                            else if (average>1500){
+                                problem_area="MEDIUM";
+                            }
+                            else{
+                                problem_area="LOW";
+                            }
+                            tv1.setText("We have found a potential problem channel. The feedback is centered around the "+problem_area+" range ("+average+"Hz). Try turning down the "+problem_area+" knob.");
                         }
                         else{
                             //this is not the problem channel
@@ -118,7 +145,7 @@ public class FirstFragment extends Fragment {
                         break;
                     }
                     case THREE_CheckFreqRange:{
-                        if (!(TEST_monitorFeedback.length==0)){
+                        if (!(TEST_monitorFeedback.length()==0)){
                             //that did not fix it
                             current_state=FeedbackStates.FOUR_TurnDownGain;
                             tv1.setText("That did not work. Try turning down gain for channel "+ current_channel+" instead.");
@@ -132,7 +159,7 @@ public class FirstFragment extends Fragment {
                         break;
                     }
                     case FOUR_TurnDownGain:{
-                        if (!(TEST_monitorFeedback.length==0)){
+                        if (!(TEST_monitorFeedback.length()==0)){
                             //that did not fix it
                             current_state=FeedbackStates.FIVE_TurnDownChannelFader;
                             tv1.setText("That did not work. Try pushing down fader for channel "+ current_channel+" instead.");
@@ -146,7 +173,7 @@ public class FirstFragment extends Fragment {
                         break;
                     }
                     case FIVE_TurnDownChannelFader:{
-                        if (!(TEST_monitorFeedback.length==0)){
+                        if (!(TEST_monitorFeedback.length()==0)){
                             //that did not fix it
                             current_state=FeedbackStates.FOUR_TurnDownGain;
                             tv1.setText("That did not work. Try turning down aux for channel "+ current_channel+" instead.");
@@ -159,7 +186,7 @@ public class FirstFragment extends Fragment {
                         }
                     }
                     case SIX_TurnDownAux:{
-                        if (!(TEST_monitorFeedback.length==0)){
+                        if (!(TEST_monitorFeedback.length()==0)){
                             //that did not fix it
                             current_state=FeedbackStates.SEVEN_UnhitPFL;
                             tv1.setText("That did not work, but we've run out of things to try. Hit the PFL button for channel "+current_channel+" again to deselect this channel.");
@@ -174,7 +201,7 @@ public class FirstFragment extends Fragment {
                     }
                     case SEVEN_UnhitPFL: {
                         if (current_channel <= 8) {
-                            if (TEST_stereoFeedback.length == 0) {
+                            if (TEST_stereoFeedback.length() == 0) {
                                 //early exit option
                                 AlertDialog.Builder builder = new AlertDialog.Builder(view.getRootView().getContext());
                                 builder.setMessage("We have detected that there is no more feedback in stereo. Do you still want to continue debug feedback?").setPositiveButton("Yes", dialogClickListener).setNegativeButton("No", dialogClickListener).setCancelable(false).show();
@@ -185,7 +212,7 @@ public class FirstFragment extends Fragment {
                             break;
                         } else {
                             //already tested all channels
-                            if (TEST_stereoFeedback.length == 0) {
+                            if (TEST_stereoFeedback.length() == 0) {
                                 //already tested all channels, no more feedback
                                 current_state = FeedbackStates.EIGHT_TurnDownMF;
                                 tv1.setText("We have went through all the options, and no more stereo feedback is detected. If you still hear feedback, you can try turning the Master Fader down at your own judgement.");

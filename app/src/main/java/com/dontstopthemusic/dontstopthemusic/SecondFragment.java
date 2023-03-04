@@ -15,6 +15,8 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.dontstopthemusic.dontstopthemusic.databinding.FragmentSecondBinding;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 
@@ -40,6 +42,8 @@ public class SecondFragment extends Fragment {
     }
     private SilenceStates current_state= SilenceStates.ZERO_init;
     private int current_channel=-1;
+    JSONArray TEST_stereoFreq;
+    Double TEST_maxValueFreq;
 
     @Override
     public View onCreateView(
@@ -84,14 +88,36 @@ public class SecondFragment extends Fragment {
 
                 //get update-st copy of json
                 localJson=MainActivity.getUpdatedJson();
-                int no_sound=1;//to fix
+                int no_sound=-1;
 
                 switch (current_state){
                     case ZERO_init:{
+                        try {
+                            TEST_stereoFreq=localJson.getJSONArray("frequency").getJSONArray(0);
+                            TEST_maxValueFreq=-1.;
+                            for (int i=0;i<TEST_stereoFreq.length();i++){
+                                if ((TEST_stereoFreq.getDouble(i))>TEST_maxValueFreq){
+                                    TEST_maxValueFreq=TEST_stereoFreq.getDouble(i);
+                                }
+                            }
+                        } catch (JSONException e) {
+                            throw new RuntimeException(e);
+                        }
+
+                        if ((TEST_maxValueFreq<1)&&(TEST_maxValueFreq>=0)){
+                            no_sound=1;
+                        }
+                        else if (TEST_maxValueFreq>=1){
+                            no_sound=0;
+                        }
+
                         buttonSecond.setText("Next");
                         if (no_sound==1){
                             current_state=SilenceStates.ONE_MF;
-                            tv2.setText("We cannot detect any sound. Is the Master Fader up?");
+                            tv2.setText("We cannot detect any sound (max value is "+TEST_maxValueFreq+"). Is the Master Fader up?");
+                        }
+                        else if (no_sound==(-1)){
+                            throw new RuntimeException("No sound test not working ERROR");
                         }
                         else{
                             current_state=SilenceStates.TWO_slider;

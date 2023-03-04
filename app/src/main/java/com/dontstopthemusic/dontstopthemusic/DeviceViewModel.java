@@ -6,7 +6,8 @@ public class DeviceViewModel extends ViewModel {
     private Device device;
 
     public void assignDevice(BluetoothService bluetoothService) {
-        device = bluetoothService.getFocusDevice();
+        //device = bluetoothService.getFocusDevice();
+        device = new FeedbackTestStubDevice();
     }
 
     public boolean isNull() {
