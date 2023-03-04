@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -28,6 +29,7 @@ public class SecondFragment extends Fragment {
     enum SilenceStates{
         ZERO_init,
         ONE_MF,
+        ONE_POINT_FIVE,
         TWO_slider,
         THREE_ST,
         FOUR_whichchannel,
@@ -44,6 +46,7 @@ public class SecondFragment extends Fragment {
     private int current_channel=-1;
     JSONArray TEST_stereoFreq;
     Double TEST_maxValueFreq;
+    String variableValue="soundboard";
 
     @Override
     public View onCreateView(
@@ -80,11 +83,12 @@ public class SecondFragment extends Fragment {
         binding.buttonsecond.setOnClickListener(new View.OnClickListener() {
 
             JSONObject localJson=MainActivity.getUpdatedJson();
-
+            AlertDialog.Builder builder=null;
             @Override
             public void onClick(View view) {
                 TextView tv2= (TextView) view.getRootView().findViewById(R.id.textview_second);
                 Button buttonSecond= (Button) view.getRootView().findViewById(R.id.buttonsecond);
+                ImageView iv2= (ImageView) view.getRootView().findViewById(R.id.imageview_second);
 
                 //get update-st copy of json
                 localJson=MainActivity.getUpdatedJson();
@@ -115,6 +119,7 @@ public class SecondFragment extends Fragment {
                         if (no_sound==1){
                             current_state=SilenceStates.ONE_MF;
                             tv2.setText("We cannot detect any sound (max value is "+TEST_maxValueFreq+"). Is the Master Fader up?");
+                            variableValue="master_fader";
                         }
                         else if (no_sound==(-1)){
                             throw new RuntimeException("No sound test not working ERROR");
@@ -122,26 +127,44 @@ public class SecondFragment extends Fragment {
                         else{
                             current_state=SilenceStates.TWO_slider;
                             tv2.setText("Check that the fader is up and the on buttons are on on all channels.");
+                            variableValue="fader_all";
                         }
+                        iv2.setImageResource(getResources().getIdentifier(variableValue,"drawable","com.dontstopthemusic.dontstopthemusic"));
                         break;
                     }
                     case ONE_MF:{
+                        current_state=SilenceStates.ONE_POINT_FIVE;
+                        tv2.setText("Check that the fader is up on all channels.");
+                        variableValue="fader_all";
+                        iv2.setImageResource(getResources().getIdentifier(variableValue,"drawable","com.dontstopthemusic.dontstopthemusic"));
+                        break;
+                    }
+                    case ONE_POINT_FIVE:{
                         current_state=SilenceStates.TWO_slider;
-                        tv2.setText("Check that the fader is up and the on buttons are on on all channels.");
+                        tv2.setText("Check that the on buttons are on on all channels.");
+                        variableValue="on";
+                        iv2.setImageResource(getResources().getIdentifier(variableValue,"drawable","com.dontstopthemusic.dontstopthemusic"));
                         break;
                     }
                     case TWO_slider:{
                         current_state=SilenceStates.THREE_ST;
                         tv2.setText("Check that the ST button is on.");
+                        variableValue="st_all";
+                        iv2.setImageResource(getResources().getIdentifier(variableValue,"drawable","com.dontstopthemusic.dontstopthemusic"));
                         break;
                     }
                     case THREE_ST:{
-                        current_state=SilenceStates.FOUR_whichchannel;
-                        AlertDialog.Builder builder = new AlertDialog.Builder(view.getRootView().getContext());
+                        if (!(builder==null)){
+                            break;
+                        }
+                        builder = new AlertDialog.Builder(view.getRootView().getContext());
                         builder.setMessage("Do you know which channel might be silent?").setPositiveButton("Yes", dialogClickListener).setNegativeButton("No", dialogClickListener).setCancelable(false).show();
                         tv2.setText("Press next to continue");
-
+                        variableValue="soundboard";
+                        iv2.setImageResource(getResources().getIdentifier(variableValue,"drawable","com.dontstopthemusic.dontstopthemusic"));
+                        //current_state=SilenceStates.FOUR_whichchannel;
                         break;
+
                     }
                     case FOUR_whichchannel:{
                         tv2.setText("ERRORRRR 4");
@@ -150,23 +173,32 @@ public class SecondFragment extends Fragment {
                     case FIVE_plugPFL:{
                         current_state=SilenceStates.SIX_gain;
                         String text="channel "+current_channel;
+                        variableValue="monitor_out";
                         if (current_channel==0){
                             text="the problem channel";
+                        }
+                        else if (current_channel==1){
+                            variableValue="pfl_monitor_1";
                         }
                         String prep="Plug into monitor out.";
                         if (current_channel>1){
                             prep="Unhit PFL for channel "+(current_channel-1)+".";
+                            variableValue="pfl_"+current_channel;
                         }
                         tv2.setText(prep+"Hit PFL for "+text+".");
+                        iv2.setImageResource(getResources().getIdentifier(variableValue,"drawable","com.dontstopthemusic.dontstopthemusic"));
                         break;
                     }
                     case SIX_gain:{
                         current_state=SilenceStates.SEVEN_EQ;
                         String text="channel "+current_channel;
+                        variableValue="gain_"+current_channel;
                         if (current_channel==0){
                             text="the problem channel";
+                            variableValue="soundboard";
                         }
                         tv2.setText("Try turning up the gain knob for "+text+". If it didn't fix it, turn it back down to its previous settings.");
+                        iv2.setImageResource(getResources().getIdentifier(variableValue,"drawable","com.dontstopthemusic.dontstopthemusic"));
                         break;
                     }
                     case SEVEN_EQ:{
@@ -175,10 +207,13 @@ public class SecondFragment extends Fragment {
                             current_state=SilenceStates.NINE_pluggedin;
                         }
                         String text="channel "+current_channel;
+                        variableValue="eq_"+current_channel;
                         if (current_channel==0){
                             text="the problem channel";
+                            variableValue="soundboard";
                         }
                         tv2.setText("Try turning all three EQ knobs to the middle position for "+text+". If that didn't fix it, turn them all back to their previous positions.");
+                        iv2.setImageResource(getResources().getIdentifier(variableValue,"drawable","com.dontstopthemusic.dontstopthemusic"));
                         break;
                     }
                     case EIGHT_mic:{
@@ -186,6 +221,8 @@ public class SecondFragment extends Fragment {
                         if ((current_channel==0)||(current_channel==1)){
                             tv2.setText("Are you using a mic? If yes, check that phantom power is on.");
                         }
+                        variableValue="phantom";
+                        iv2.setImageResource(getResources().getIdentifier(variableValue,"drawable","com.dontstopthemusic.dontstopthemusic"));
                         break;
                     }
                     case NINE_pluggedin:{
@@ -195,11 +232,15 @@ public class SecondFragment extends Fragment {
                         }
                         current_state=SilenceStates.ELEVEN_giveup;
                         tv2.setText("Check if things plugged in correctly for "+text+"?");
+                        variableValue="outputs";
+                        iv2.setImageResource(getResources().getIdentifier(variableValue,"drawable","com.dontstopthemusic.dontstopthemusic"));
                         break;
                     }
                     case TEN_dontknow:{
                         current_state=SilenceStates.FIVE_plugPFL;
                         tv2.setText("The following actions might mess up your current settings. Press next if you want to proceed and check through all the channels.");
+                        variableValue="soundboard";
+                        iv2.setImageResource(getResources().getIdentifier(variableValue,"drawable","com.dontstopthemusic.dontstopthemusic"));
                         break;
                     }
                     case ELEVEN_giveup:{
@@ -213,6 +254,8 @@ public class SecondFragment extends Fragment {
                             current_channel++;
                             current_state=SilenceStates.FIVE_plugPFL;
                         }
+                        variableValue="soundboard";
+                        iv2.setImageResource(getResources().getIdentifier(variableValue,"drawable","com.dontstopthemusic.dontstopthemusic"));
                         break;
                     }
                     case TWELVE_end:{
