@@ -17,7 +17,7 @@ public class FeedbackTestStubDevice extends StubDevice
 	private final boolean[] hiss = { false, false };
 
 	/* Feedback frequency values */
-	private final int[][] feedback = { {}, {} };
+	private final int[][] feedback = { {1234}, {123} };
 
 
 	/**
@@ -61,8 +61,8 @@ public class FeedbackTestStubDevice extends StubDevice
 		freqData.put ( freqData2 );
 		for ( int i = 0; i < 160; ++i )
 		{
-			freqData1.put ( 0 );
-			freqData2.put ( 0 );
+			freqData1.put ( 0. );
+			freqData2.put ( 0. );
 		}
 
 		/* Set hiss */
