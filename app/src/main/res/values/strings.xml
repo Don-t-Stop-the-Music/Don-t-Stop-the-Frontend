@@ -38,5 +38,7 @@
     <string name="device_name">Device name</string>
     <string name="device_address">Device address</string>
     <string name="device_status">Device status</string>
+    <string name="monitor">Monitor</string>
+    <string name="stereo">Stereo</string>
 
 </resources>
