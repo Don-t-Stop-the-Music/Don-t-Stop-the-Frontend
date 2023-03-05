@@ -30,25 +30,41 @@
         app:layout_constraintTop_toBottomOf="@+id/textview_third"
         app:layout_constraintVertical_bias="0.26">
 
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="@string/stereo" />
+
         <FrameLayout
-            android:id="@+id/fl_chart"
+            android:id="@+id/fl_chart_stereo"
             android:layout_width="match_parent"
             android:layout_height="200dp">
 
             <com.github.mikephil.charting.charts.LineChart
-                android:id="@+id/chart"
+                android:id="@+id/chart_stereo"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginTop="10dp" />
+                android:layout_marginTop="10dp">
+
+            </com.github.mikephil.charting.charts.LineChart>
         </FrameLayout>
 
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="@string/monitor" />
+
         <FrameLayout
-            android:id="@+id/fl_chart2"
+            android:id="@+id/fl_chart_monitor"
             android:layout_width="match_parent"
             android:layout_height="200dp">
 
             <com.github.mikephil.charting.charts.LineChart
-                android:id="@+id/chart2"
+                android:id="@+id/chart_monitor"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginTop="10dp" />
