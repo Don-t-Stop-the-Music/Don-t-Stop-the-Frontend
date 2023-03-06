@@ -111,6 +111,9 @@ public class FirstFragment extends Fragment {
                         if (current_channel==0){
                             current_channel=1;
                         }
+                        if (current_channel==6){
+                            current_channel=7;
+                        }
                         tv1.setText("Hit PFL on channel "+current_channel);
                         variableValue="pfl_"+current_channel;
                         iv1.setImageResource(getResources().getIdentifier(variableValue,"drawable","com.dontstopthemusic.dontstopthemusic"));
@@ -229,14 +232,16 @@ public class FirstFragment extends Fragment {
                         break;
                     }
                     case SEVEN_UnhitPFL: {
-                        if (current_channel <= 8) {
+                        if (current_channel < 8) {
                             if (TEST_stereoFeedback.length() == 0) {
                                 //early exit option
                                 if (!(builder==null)){
-                                    break;
+
                                 }
-                                builder = new AlertDialog.Builder(view.getRootView().getContext());
-                                builder.setMessage("We have detected that there is no more feedback in stereo. Do you still want to continue debug feedback?").setPositiveButton("Yes", dialogClickListener).setNegativeButton("No", dialogClickListener).setCancelable(false).show();
+                                else {
+                                    builder = new AlertDialog.Builder(view.getRootView().getContext());
+                                    builder.setMessage("We have detected that there is no more feedback in stereo. Do you still want to continue debug feedback?").setPositiveButton("Yes", dialogClickListener).setNegativeButton("No", dialogClickListener).setCancelable(false).show();
+                                }
                             }
                             //test other channels
                             current_state = FeedbackStates.ONE_PlugMonitorOut;

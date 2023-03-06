@@ -49,99 +49,100 @@ public class ThirdFragment extends Fragment {
     private class DeviceNewDataCallback implements Device.NewDataCallback {
         @Override
         public void onNewData(Device device, @Nullable JSONObject data) {
-            if (binding != null) {
-                try {
-                    LineChart stereoChart = getView().findViewById(R.id.chart_stereo);
-                    LineChart monitorChart = getView().findViewById(R.id.chart_monitor);
+            try {
+                LineChart stereoChart = getView().findViewById(R.id.chart_stereo);
+                LineChart monitorChart = getView().findViewById(R.id.chart_monitor);
 
-                    Map<LineChart, LineData> charts = new HashMap<>();
+                Map<LineChart, LineData> charts = new HashMap<>();
 
-                    getActivity().runOnUiThread(() -> {
-                        List<Entry> stereoEntries = new ArrayList<>();
-                        List<Entry> monitorEntries = new ArrayList<>();
+                getActivity().runOnUiThread(() -> {
+                    List<Entry> stereoEntries = new ArrayList<>();
+                    List<Entry> monitorEntries = new ArrayList<>();
 
-                        JSONArray stereoArray;
-                        JSONArray monitorArray;
-                        JSONArray eqArrays;
-                        JSONArray hissArray;
-                        JSONArray feedbackArray;
+                    JSONArray stereoArray;
+                    JSONArray monitorArray;
+                    JSONArray eqArrays;
+                    JSONArray hissArray;
+                    JSONArray feedbackArray;
 
-                        try {
+                    try {
 
-                            eqArrays = data.getJSONArray("frequency");
-                            hissArray = data.getJSONArray("hiss");
-                            feedbackArray = data.getJSONArray("feedback");
+                        eqArrays = data.getJSONArray("frequency");
+                        hissArray = data.getJSONArray("hiss");
+                        feedbackArray = data.getJSONArray("feedback");
 
-                            if (hissArray.getBoolean(0) || hissArray.getBoolean(1)) {
-                                binding.buttonDebugHiss.setBackgroundColor(Color.RED);
-                            } else {
-                                binding.buttonDebugHiss.setBackgroundColor(Color.parseColor(buttonColor));
-                            }
-
-                            if (feedbackArray.getJSONArray(0).length() > 0 ||
-                                    feedbackArray.getJSONArray(1).length() > 0) {
-                                binding.buttonDebugFeedback.setBackgroundColor(Color.RED);
-                            } else {
-                                binding.buttonDebugFeedback.setBackgroundColor(Color.parseColor(buttonColor));
-                            }
-
-                            stereoArray = (JSONArray) eqArrays.get(0);
-                            monitorArray = (JSONArray) eqArrays.get(1);
-
-                            for (int i = 0; i < stereoArray.length(); ++i) {
-                                Double u = stereoArray.getDouble(i);
-                                stereoEntries.add(new Entry(i, u.floatValue()));
-                            }
-
-                            for (int j = 0; j < monitorArray.length(); ++j) {
-                                Double v = monitorArray.getDouble(j);
-                                monitorEntries.add(new Entry(j, v.floatValue()));
-                            }
-
-                        } catch (JSONException e) {
-                            throw new RuntimeException(e);
+                        if (hissArray.getBoolean(0) || hissArray.getBoolean(1)) {
+                            binding.buttonDebugHiss.setBackgroundColor(Color.RED);
+                        } else {
+                            binding.buttonDebugHiss.setBackgroundColor(Color.parseColor(buttonColor));
                         }
 
-                        LineDataSet stereoDataSet = new LineDataSet(stereoEntries, "");
-                        LineDataSet monitorDataSet = new LineDataSet(monitorEntries, "");
-
-                        stereoDataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-                        stereoDataSet.setDrawValues(false);
-                        stereoDataSet.setDrawCircles(false);
-
-                        monitorDataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-                        monitorDataSet.setDrawValues(false);
-                        monitorDataSet.setDrawCircles(false);
-
-                        LineData stereoLineData = new LineData(stereoDataSet);
-                        LineData monitorLineData = new LineData(monitorDataSet);
-
-                        charts.put(stereoChart, stereoLineData);
-                        charts.put(monitorChart, monitorLineData);
-
-                        for (LineChart c: charts.keySet()) {
-                            c.setData(charts.get(c));
-                            c.setDrawBorders(false);
-
-                            c.getXAxis().setPosition(XAxis.XAxisPosition.BOTH_SIDED);
-                            c.getXAxis().setDrawGridLines(false);
-                            c.getXAxis().setDrawLabels(false);
-                            c.getXAxis().setDrawAxisLine(false);
-
-                            c.getAxisLeft().setDrawGridLines(false);
-                            c.getAxisLeft().setDrawLabels(false);
-                            c.getAxisLeft().setDrawAxisLine(false);
-                            c.getAxisRight().setDrawGridLines(false);
-                            c.getAxisRight().setDrawLabels(false);
-                            c.getAxisRight().setDrawAxisLine(false);
-
-                            c.getDescription().setEnabled(false);
-                            c.getLegend().setEnabled(false);
-                            c.invalidate();
+                        if (feedbackArray.getJSONArray(0).length() > 0 ||
+                                feedbackArray.getJSONArray(1).length() > 0) {
+                            binding.buttonDebugFeedback.setBackgroundColor(Color.RED);
+                        } else {
+                            binding.buttonDebugFeedback.setBackgroundColor(Color.parseColor(buttonColor));
                         }
-                    });
-                } catch (NullPointerException ignore) {}
-            }
+
+                        stereoArray = (JSONArray) eqArrays.get(0);
+                        monitorArray = (JSONArray) eqArrays.get(1);
+
+                        for (int i = 0; i < stereoArray.length(); ++i) {
+                            Double u = stereoArray.getDouble(i);
+                            stereoEntries.add(new Entry(i, u.floatValue()));
+                        }
+
+                        for (int j = 0; j < monitorArray.length(); ++j) {
+                            Double v = monitorArray.getDouble(j);
+                            monitorEntries.add(new Entry(j, v.floatValue()));
+                        }
+
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    LineDataSet stereoDataSet = new LineDataSet(stereoEntries, "");
+                    LineDataSet monitorDataSet = new LineDataSet(monitorEntries, "");
+
+                    stereoDataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+                    stereoDataSet.setDrawValues(false);
+                    stereoDataSet.setDrawCircles(false);
+
+                    monitorDataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+                    monitorDataSet.setDrawValues(false);
+                    monitorDataSet.setDrawCircles(false);
+
+                    LineData stereoLineData = new LineData(stereoDataSet);
+                    LineData monitorLineData = new LineData(monitorDataSet);
+
+                    charts.put(stereoChart, stereoLineData);
+                    charts.put(monitorChart, monitorLineData);
+
+                    for (LineChart c: charts.keySet()) {
+                        c.setData(charts.get(c));
+                        c.setDrawBorders(false);
+
+                        c.getXAxis().setPosition(XAxis.XAxisPosition.BOTH_SIDED);
+                        c.getXAxis().setDrawGridLines(false);
+                        c.getXAxis().setDrawLabels(false);
+                        c.getXAxis().setDrawAxisLine(false);
+
+                        c.getAxisLeft().setDrawGridLines(false);
+                        c.getAxisLeft().setDrawLabels(false);
+                        c.getAxisLeft().setDrawAxisLine(false);
+                        c.getAxisRight().setDrawGridLines(false);
+                        c.getAxisRight().setDrawLabels(false);
+                        c.getAxisRight().setDrawAxisLine(false);
+
+                        c.getAxisLeft ().setAxisMaxValue ( 5 );
+                        c.getAxisRight ().setAxisMaxValue ( 5 );
+
+                        c.getDescription().setEnabled(false);
+                        c.getLegend().setEnabled(false);
+                        c.invalidate();
+                    }
+                });
+            } catch (NullPointerException ignore) {}
         }
     }
 
@@ -152,13 +153,14 @@ public class ThirdFragment extends Fragment {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                if (tDevice.isConnected()) {
-                    tDevice.registerNewDataCallback(tDeviceNewDataCallback);
+                while ( true )
+                {
+                    if ( tDevice.isConnected () )
+                    {
+                        tDevice.registerNewDataCallback ( tDeviceNewDataCallback );
+                        return;
+                    }
+                    Thread.yield ();
                 }
             }
         }).start();
@@ -192,6 +194,5 @@ public class ThirdFragment extends Fragment {
     public void onDestroyView() {
         tDevice.unregisterNewDataCallback(tDeviceNewDataCallback);
         super.onDestroyView();
-        binding = null;
     }
 }

@@ -9,12 +9,12 @@
         android:id="@+id/device_name"
         android:layout_width="0dp"
         android:layout_height="50dp"
-        android:layout_marginTop="5dp"
         android:layout_marginStart="10dp"
-        android:layout_marginEnd="10dp"
-        android:textSize="24sp"
+        android:layout_marginTop="5dp"
         android:text="@string/device_name"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:gravity="center_vertical"
+        android:textSize="24sp"
+        app:layout_constraintEnd_toStartOf="@+id/disconnect_device"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -25,6 +25,7 @@
         android:layout_marginStart="10dp"
         android:layout_marginEnd="10dp"
         android:text="@string/device_address"
+        android:gravity="center_vertical"
         android:textSize="12sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -38,11 +39,38 @@
         android:layout_marginEnd="10dp"
         android:layout_marginBottom="5dp"
         android:text="@string/device_status"
+        android:gravity="center_vertical"
         android:textAlignment="textEnd"
         android:textSize="12sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/device_address" />
+
+    <ImageView
+        android:id="@+id/device_arrow"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/rightarrow"
+        android:contentDescription="@string/open_device" />
+
+    <TextView
+        android:id="@+id/disconnect_device"
+        android:layout_width="wrap_content"
+        android:layout_height="32dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginEnd="10dp"
+        android:text="@string/disconnect_device"
+        android:gravity="center_vertical"
+        android:textSize="16sp"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:background="@drawable/rounded_button"
+        app:layout_constraintEnd_toStartOf="@+id/device_arrow"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

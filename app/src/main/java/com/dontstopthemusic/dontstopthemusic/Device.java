@@ -2,6 +2,7 @@ package com.dontstopthemusic.dontstopthemusic;
 
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
@@ -131,8 +132,7 @@ public class Device implements AutoCloseable
 		synchronized ( mStatusChangeCallbacks )
 		{
 			mStatusChangeCallbacks.add ( callback );
-			if ( mMostRecentData != null )
-				callback.onStatusChange ( this );
+			callback.onStatusChange ( this );
 		}
 	}
 
@@ -156,7 +156,8 @@ public class Device implements AutoCloseable
 		synchronized ( mNewDataCallbacks )
 		{
 			mNewDataCallbacks.add ( callback );
-			callback.onNewData ( this, mMostRecentData );
+			if ( mMostRecentData != null )
+				callback.onNewData ( this, mMostRecentData );
 		}
 	}
 
@@ -291,6 +292,9 @@ public class Device implements AutoCloseable
 				if ( r == 0 ) break;
 				else if ( r == -1 ) return;
 				else jsonStr.append ( ( char ) r );
+
+			/* If the string is empty, continue */
+			if ( jsonStr.length () == 0 ) continue;
 
 			/* JSONify */
 			broadcastNewData ( new JSONObject ( jsonStr.toString () ) );
