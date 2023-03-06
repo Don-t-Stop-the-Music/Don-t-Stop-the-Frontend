@@ -132,8 +132,7 @@ public class Device implements AutoCloseable
 		synchronized ( mStatusChangeCallbacks )
 		{
 			mStatusChangeCallbacks.add ( callback );
-			if ( mMostRecentData != null )
-				callback.onStatusChange ( this );
+			callback.onStatusChange ( this );
 		}
 	}
 
@@ -157,7 +156,8 @@ public class Device implements AutoCloseable
 		synchronized ( mNewDataCallbacks )
 		{
 			mNewDataCallbacks.add ( callback );
-			callback.onNewData ( this, mMostRecentData );
+			if ( mMostRecentData != null )
+				callback.onNewData ( this, mMostRecentData );
 		}
 	}
 
