@@ -64,7 +64,7 @@ public class FourthFragment extends Fragment {
                     asked = true;
                 }
                 else if (i == DialogInterface.BUTTON_NEGATIVE) {
-                    currentState = HissStates.FIVE_UnhitPFL;
+                    currentState = HissStates.FOUR_TurnDownFader;
                     premature = true;
                 }
             }
@@ -170,7 +170,8 @@ public class FourthFragment extends Fragment {
                                         .setCancelable(false).show();
                             }
                         }
-                        else if (channel == 7) {
+
+                        if (channel >= 7) {
                             completed = true;
                         }
 
