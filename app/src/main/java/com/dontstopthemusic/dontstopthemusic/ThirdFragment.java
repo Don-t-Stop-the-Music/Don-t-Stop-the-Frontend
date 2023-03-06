@@ -1,5 +1,6 @@
 package com.dontstopthemusic.dontstopthemusic;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,6 +34,8 @@ public class ThirdFragment extends Fragment {
     private DeviceViewModel tDevice;
     private DeviceNewDataCallback tDeviceNewDataCallback = new DeviceNewDataCallback();
 
+    private String buttonColor = "#0934B6";
+
     @Override
     public View onCreateView(
             LayoutInflater inflater, ViewGroup container,
@@ -47,65 +50,89 @@ public class ThirdFragment extends Fragment {
         @Override
         public void onNewData(Device device, @Nullable JSONObject data) {
             try {
-                LineChart chart = getView().findViewById(R.id.chart);
-                LineChart chart2 = getView().findViewById(R.id.chart2);
+                LineChart stereoChart = getView().findViewById(R.id.chart_stereo);
+                LineChart monitorChart = getView().findViewById(R.id.chart_monitor);
 
                 Map<LineChart, LineData> charts = new HashMap<>();
 
                 getActivity().runOnUiThread(() -> {
-                    List<Entry> entries = new ArrayList<>();
-                    List<Entry> entries2 = new ArrayList<>();
-                    JSONArray array;
-                    JSONArray array2;
-                    JSONArray arrays;
+                    List<Entry> stereoEntries = new ArrayList<>();
+                    List<Entry> monitorEntries = new ArrayList<>();
+
+                    JSONArray stereoArray;
+                    JSONArray monitorArray;
+                    JSONArray eqArrays;
+                    JSONArray hissArray;
+                    JSONArray feedbackArray;
 
                     try {
 
-                        arrays = data.getJSONArray("frequency");
-                        array = (JSONArray) arrays.get(0);
-                        array2 = (JSONArray) arrays.get(1);
+                        eqArrays = data.getJSONArray("frequency");
+                        hissArray = data.getJSONArray("hiss");
+                        feedbackArray = data.getJSONArray("feedback");
 
-                        for (int j = 0; j < array.length(); ++j) {
-                            Double val = array.getDouble(j);
-                            Double val2 = array2.getDouble(j);
-                            entries.add(new Entry(j, val.floatValue()));
-                            entries2.add(new Entry(j, (float) val2.floatValue()));
+                        if (hissArray.getBoolean(0) || hissArray.getBoolean(1)) {
+                            binding.buttonDebugHiss.setBackgroundColor(Color.RED);
+                        } else {
+                            binding.buttonDebugHiss.setBackgroundColor(Color.parseColor(buttonColor));
                         }
+
+                        if (feedbackArray.getJSONArray(0).length() > 0 ||
+                                feedbackArray.getJSONArray(1).length() > 0) {
+                            binding.buttonDebugFeedback.setBackgroundColor(Color.RED);
+                        } else {
+                            binding.buttonDebugHiss.setBackgroundColor(Color.parseColor(buttonColor));
+                        }
+
+                        stereoArray = (JSONArray) eqArrays.get(0);
+                        monitorArray = (JSONArray) eqArrays.get(1);
+
+                        for (int i = 0; i < stereoArray.length(); ++i) {
+                            Double u = stereoArray.getDouble(i);
+                            stereoEntries.add(new Entry(i, u.floatValue()));
+                        }
+
+                        for (int j = 0; j < monitorArray.length(); ++j) {
+                            Double v = monitorArray.getDouble(j);
+                            monitorEntries.add(new Entry(j, v.floatValue()));
+                        }
+
                     } catch (JSONException e) {
                         throw new RuntimeException(e);
                     }
 
+                    LineDataSet stereoDataSet = new LineDataSet(stereoEntries, "");
+                    LineDataSet monitorDataSet = new LineDataSet(monitorEntries, "");
 
-                    LineDataSet dataSet = new LineDataSet(entries, "");
-                    LineDataSet dataSet2 = new LineDataSet(entries2, "");
+                    stereoDataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+                    stereoDataSet.setDrawValues(false);
+                    stereoDataSet.setDrawCircles(false);
 
-                    dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-                    dataSet.setDrawValues(false);
-                    dataSet.setDrawCircles(false);
+                    monitorDataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+                    monitorDataSet.setDrawValues(false);
+                    monitorDataSet.setDrawCircles(false);
 
-                    dataSet2.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-                    dataSet2.setDrawValues(false);
-                    dataSet2.setDrawCircles(false);
+                    LineData stereoLineData = new LineData(stereoDataSet);
+                    LineData monitorLineData = new LineData(monitorDataSet);
 
-                    LineData lineData = new LineData(dataSet);
-                    LineData lineData2 = new LineData(dataSet2);
-
-                    charts.put(chart, lineData);
-                    charts.put(chart2, lineData2);
+                    charts.put(stereoChart, stereoLineData);
+                    charts.put(monitorChart, monitorLineData);
 
                     for (LineChart c: charts.keySet()) {
                         c.setData(charts.get(c));
+                        c.setDrawBorders(false);
 
                         c.getXAxis().setPosition(XAxis.XAxisPosition.BOTH_SIDED);
                         c.getXAxis().setDrawGridLines(false);
                         c.getXAxis().setDrawLabels(false);
+                        c.getXAxis().setDrawAxisLine(false);
 
                         c.getAxisLeft().setDrawGridLines(false);
                         c.getAxisLeft().setDrawLabels(false);
-                        c.getAxisLeft().setAxisMaxValue(200);
+                        c.getAxisLeft().setDrawAxisLine(false);
                         c.getAxisRight().setDrawGridLines(false);
                         c.getAxisRight().setDrawLabels(false);
-                        c.getAxisRight().setAxisMaxValue(200);
+                        c.getAxisRight().setDrawAxisLine(false);
 
                         c.getDescription().setEnabled(false);
                         c.getLegend().setEnabled(false);
@@ -165,5 +192,4 @@ public class ThirdFragment extends Fragment {
         super.onDestroyView();
         binding = null;
     }
-
 }

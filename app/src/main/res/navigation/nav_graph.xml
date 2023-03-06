@@ -26,7 +26,7 @@
     </fragment>
     <fragment
         android:id="@+id/FourthFragment"
-        android:name="com.dontstopthemusic.dontstopthemusic.SecondFragment"
+        android:name="com.dontstopthemusic.dontstopthemusic.FourthFragment"
         android:label="@string/fourth_fragment_label"
         tools:layout="@layout/fragment_fourth">
         <action
