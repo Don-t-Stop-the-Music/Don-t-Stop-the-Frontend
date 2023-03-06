@@ -118,7 +118,7 @@ public class SecondFragment extends Fragment {
                         buttonSecond.setText("Next");
                         if (no_sound==1){
                             current_state=SilenceStates.ONE_MF;
-                            tv2.setText("We cannot detect any sound (max value is "+TEST_maxValueFreq+"). Is the Master Fader up?");
+                            tv2.setText("We cannot detect any sound (max value is "+TEST_maxValueFreq+"). Is the Master Fader up? (Note: you can end this debug process whenever you can hear sound again.)");
                             variableValue="master_fader";
                         }
                         else if (no_sound==(-1)){
@@ -126,7 +126,7 @@ public class SecondFragment extends Fragment {
                         }
                         else{
                             current_state=SilenceStates.TWO_slider;
-                            tv2.setText("Check that the fader is up and the on buttons are on on all channels.");
+                            tv2.setText("Check that the fader is up and the on buttons are on on all channels. (Note: you can end this debug process whenever you can hear sound again.)");
                             variableValue="fader_all";
                         }
                         iv2.setImageResource(getResources().getIdentifier(variableValue,"drawable","com.dontstopthemusic.dontstopthemusic"));
@@ -155,14 +155,16 @@ public class SecondFragment extends Fragment {
                     }
                     case THREE_ST:{
                         if (!(builder==null)){
-                            break;
+
                         }
-                        builder = new AlertDialog.Builder(view.getRootView().getContext());
-                        builder.setMessage("Do you know which channel might be silent?").setPositiveButton("Yes", dialogClickListener).setNegativeButton("No", dialogClickListener).setCancelable(false).show();
-                        tv2.setText("Press next to continue");
-                        variableValue="soundboard";
-                        iv2.setImageResource(getResources().getIdentifier(variableValue,"drawable","com.dontstopthemusic.dontstopthemusic"));
-                        //current_state=SilenceStates.FOUR_whichchannel;
+                        else{
+                            builder = new AlertDialog.Builder(view.getRootView().getContext());
+                            builder.setMessage("Do you know which channel might be silent?").setPositiveButton("Yes", dialogClickListener).setNegativeButton("No", dialogClickListener).setCancelable(false).show();
+                            tv2.setText("Press next to continue");
+                            variableValue="soundboard";
+                            iv2.setImageResource(getResources().getIdentifier(variableValue,"drawable","com.dontstopthemusic.dontstopthemusic"));
+                            //current_state=SilenceStates.FOUR_whichchannel;
+                        }
                         break;
 
                     }
@@ -183,6 +185,9 @@ public class SecondFragment extends Fragment {
                         String prep="Plug into monitor out.";
                         if (current_channel>1){
                             prep="Unhit PFL for channel "+(current_channel-1)+".";
+                            if (current_channel==7){
+                                prep="Unhit PFL for channel "+5+".";
+                            }
                             variableValue="pfl_"+current_channel;
                         }
                         tv2.setText(prep+"Hit PFL for "+text+".");
@@ -244,7 +249,7 @@ public class SecondFragment extends Fragment {
                         break;
                     }
                     case ELEVEN_giveup:{
-                        if (current_channel==0||current_channel==8){
+                        if (current_channel==0||current_channel==7){
                             buttonSecond.setText("End debug silence");
                             tv2.setText("We don't think it is an issue of the sound board. Try checking other connections instead.");
                             current_state=SilenceStates.TWELVE_end;
@@ -252,6 +257,9 @@ public class SecondFragment extends Fragment {
                         else{
                             tv2.setText("Moving on to next channel...");
                             current_channel++;
+                            if (current_channel==6){
+                                current_channel++;
+                            }
                             current_state=SilenceStates.FIVE_plugPFL;
                         }
                         variableValue="soundboard";
