@@ -134,8 +134,8 @@ public class ThirdFragment extends Fragment {
                         c.getAxisRight().setDrawLabels(false);
                         c.getAxisRight().setDrawAxisLine(false);
 
-                        c.getAxisLeft ().setAxisMaxValue ( 5 );
-                        c.getAxisRight ().setAxisMaxValue ( 5 );
+                        c.getAxisLeft ().setAxisMaxValue ( 6 );
+                        c.getAxisRight ().setAxisMaxValue ( 6 );
 
                         c.getDescription().setEnabled(false);
                         c.getLegend().setEnabled(false);
