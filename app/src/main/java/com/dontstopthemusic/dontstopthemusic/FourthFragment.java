@@ -24,9 +24,12 @@ public class FourthFragment extends Fragment {
 
     private FragmentFourthBinding binding;
     private HissStates currentState = HissStates.ZERO_Init;
-    private int channel = 0;
+    private int channel = 1;
     boolean[] TEST_hiss;
     String variableValue="soundboard";
+    boolean completed = false;
+    boolean premature = false;
+    boolean asked = false;
 
 
     enum HissStates {
@@ -57,16 +60,19 @@ public class FourthFragment extends Fragment {
         DialogInterface.OnClickListener dialogClickListener=new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                if (i == DialogInterface.BUTTON_POSITIVE) {}
+                if (i == DialogInterface.BUTTON_POSITIVE) {
+                    asked = true;
+                }
                 else if (i == DialogInterface.BUTTON_NEGATIVE) {
-                    NavHostFragment.findNavController(FourthFragment.this)
-                            .navigate(R.id.action_FourthFragment_to_ThirdFragment);
+                    currentState = HissStates.FIVE_UnhitPFL;
+                    premature = true;
                 }
             }
         };
 
         binding.buttonFourth.setOnClickListener(new View.OnClickListener() {
             JSONObject localJSON = MainActivity.getUpdatedJson();
+            AlertDialog.Builder builder=null;
             @Override
             public void onClick(View view) {
                 TextView textView = (TextView) view.getRootView().findViewById(R.id.textview_fourth);
@@ -84,65 +90,137 @@ public class FourthFragment extends Fragment {
 
                 switch (currentState) {
                     case ZERO_Init: {
-                        if (TEST_hiss[0]) {
-                            channel = 0;
-                        } else if (TEST_hiss[1]) {
-                            channel = 1;
-                        }
-
                         currentState = HissStates.ONE_HitPFL;
-                        textView.setText(String.format("Hit PFL on channel: %s", channel));
                         variableValue = String.format("pfl_%s", channel);
+
+                        textView.setText(String.format("Hit PFL on channel %s", channel));
                         imageView.setImageResource(getResources().getIdentifier(variableValue,
                                 "drawable", "com.dontstopthemusic.dontstopthemusic"));
+                        buttonFourth.setText("Next");
                         break;
                     }
                     case ONE_HitPFL: {
-                        currentState = HissStates.TWO_UnplugReplug;
-                        textView.setText(String.format("Unplug and replug channel %s input", channel));
-                        variableValue = String.format("pfl_%s", channel); //TODO: replace
+                        if (!TEST_hiss[1]) {
+                            currentState = HissStates.TWO_UnplugReplug;
+                            variableValue = "outputs";
+                            textView.setText(String.format("Unplug and replug channel %s input", channel));
+
+                            if (!asked) {
+                                if (!(builder == null)) {
+                                    break;
+                                }
+
+                                builder = new AlertDialog.Builder(view.getRootView().getContext());
+                                builder.setMessage("No hiss detected. Would you like to continue debugging?")
+                                        .setNegativeButton("No", dialogClickListener).setPositiveButton("Yes", dialogClickListener)
+                                        .setCancelable(false).show();
+                            }
+                        }
+                        else if (!TEST_hiss[0]) {
+                            currentState = HissStates.FOUR_TurnDownFader;
+                            variableValue = "soundboard";
+                            textView.setText("This is not the correct channel. Proceed to next instruction.");
+                        }
+                        else {
+                            currentState = HissStates.TWO_UnplugReplug;
+                            variableValue = "outputs";
+                            textView.setText(String.format("Unplug and replug channel %s input", channel));
+                        }
+
                         imageView.setImageResource(getResources().getIdentifier(variableValue,
                                 "drawable", "com.dontstopthemusic.dontstopthemusic"));
+                        buttonFourth.setText("Next");
                         break;
                     }
                     case TWO_UnplugReplug: {
                         currentState = HissStates.THREE_TurnUpGain;
-                        textView.setText(String.format("Turn up the gain for channel %s", channel));
                         variableValue = String.format("gain_%s", channel);
+
+                        if (!TEST_hiss[1]) {
+                            if (!asked) {
+                                if (!(builder==null)){
+                                    break;
+                                }
+                                builder = new AlertDialog.Builder(view.getRootView().getContext());
+                                builder.setMessage("No hiss detected. Would you like to continue debugging?")
+                                        .setPositiveButton("Yes", dialogClickListener).setNegativeButton("No", dialogClickListener)
+                                        .setCancelable(false).show();
+                            }
+                        }
+
+                        textView.setText(String.format("Turn up the gain for channel %s", channel));
                         imageView.setImageResource(getResources().getIdentifier(variableValue,
                                 "drawable", "com.dontstopthemusic.dontstopthemusic"));
+                        buttonFourth.setText("Next");
                         break;
                     }
                     case THREE_TurnUpGain: {
                         currentState = HissStates.FOUR_TurnDownFader;
-                        textView.setText(String.format("Turn down the fader for channel %s", channel));
                         variableValue = String.format("fader_%s", channel);
+
+                        if (!TEST_hiss[1]) {
+                            if (!asked) {
+                                if (!(builder == null)) {
+                                    break;
+                                }
+
+                                builder = new AlertDialog.Builder(view.getRootView().getContext());
+                                builder.setMessage("No hiss detected. Would you like to continue debugging?")
+                                        .setNegativeButton("No", dialogClickListener).setPositiveButton("Yes", dialogClickListener)
+                                        .setCancelable(false).show();
+                            }
+                        }
+                        else if (channel == 7) {
+                            completed = true;
+                        }
+
+                        textView.setText(String.format("Turn down the fader for channel %s", channel));
                         imageView.setImageResource(getResources().getIdentifier(variableValue,
                                 "drawable", "com.dontstopthemusic.dontstopthemusic"));
+                        buttonFourth.setText("Next");
                         break;
                     }
+
                     case FOUR_TurnDownFader: {
-                        currentState = HissStates.FIVE_UnhitPFL;
-                        textView.setText(String.format("Hit the PFL button for channel %s to deselect" +
-                                "this channel."));
-                        variableValue = String.format("pfl_%s", channel);
+                        int oldChannel = channel;
+
+                        if (completed || premature) {
+                            currentState = HissStates.FIVE_UnhitPFL;
+                        }
+                        else if (channel == 5) {
+                            channel += 2;
+                            currentState = HissStates.ZERO_Init;
+                        }
+                        else {
+                            channel += 1;
+                            currentState = HissStates.ZERO_Init;
+                        }
+
+                        variableValue = String.format("pfl_%s", oldChannel);
+
+                        textView.setText(String.format("Hit the PFL button for channel %s to deselect " +
+                                "this channel.", oldChannel));
                         imageView.setImageResource(getResources().getIdentifier(variableValue,
                                 "drawable", "com.dontstopthemusic.dontstopthemusic"));
+                        buttonFourth.setText("Next");
                         break;
                     }
                     case FIVE_UnhitPFL: {
                         currentState = HissStates.SIX_Exit;
-                        int oldChannel = channel;
-                        if (TEST_hiss[0] || TEST_hiss[1]) {
-                            channel = TEST_hiss[0] ? 0 : 1;
-                            if (oldChannel == channel) {
-                                textView.setText("Unfortunately, there are no other options to solve" +
+                        if (TEST_hiss[1]) {
+                                textView.setText("Unfortunately, there are no other options to solve " +
                                         "the issue via the soundboard. Please check the DI box.");
-                            }
                         }
                         else {
-                            textView.setText("We have gone through all of the options and no more hiss" +
-                                    "is detected. If you still hear any hiss, check the DI box.");
+                            if (completed) {
+                                textView.setText("We have gone through all of the options and no more hiss " +
+                                        "is detected. If you still hear any hiss, check the DI box.");
+                            }
+                            else {
+                                textView.setText("Hiss was no longer detected during the debug process for " +
+                                        "one of the channels. If you still hear any hiss, try again or " +
+                                        "check the DI box.");
+                            }
                         }
                         variableValue = "soundboard";
                         imageView.setImageResource(getResources().getIdentifier(variableValue,
