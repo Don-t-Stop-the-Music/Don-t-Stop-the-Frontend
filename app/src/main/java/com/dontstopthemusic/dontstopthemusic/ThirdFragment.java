@@ -129,10 +129,11 @@ public class ThirdFragment extends Fragment {
 
                         c.getAxisLeft().setDrawGridLines(false);
                         c.getAxisLeft().setDrawLabels(false);
-                        c.getAxisLeft().setDrawAxisLine(false);
+                        
+                        c.getAxisLeft().setAxisMaxValue(50);
                         c.getAxisRight().setDrawGridLines(false);
                         c.getAxisRight().setDrawLabels(false);
-                        c.getAxisRight().setDrawAxisLine(false);
+                        c.getAxisRight().setAxisMaxValue(50);
 
                         c.getDescription().setEnabled(false);
                         c.getLegend().setEnabled(false);
