@@ -1,10 +1,13 @@
 package com.dontstopthemusic.dontstopthemusic;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -184,6 +187,26 @@ public class ThirdFragment extends Fragment {
                         .navigate(R.id.action_ThirdFragment_to_FourthFragment);
             }
         });
+
+        DialogInterface.OnClickListener dialogClickListener=new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                switch(i){
+                    case DialogInterface.BUTTON_POSITIVE:{
+                        break;
+                    }
+                }
+            }
+        };
+        ImageView image = new ImageView(view.getRootView().getContext());
+        image.setImageResource(R.drawable.cables);
+        image.setAdjustViewBounds(true);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(view.getRootView().getContext());
+        builder.setMessage("Check that you have monitor and stereo out plugged in correctly.").setPositiveButton("OK", dialogClickListener).setCancelable(false).setView(image).show();
+
+
+
     }
 
     @Override
