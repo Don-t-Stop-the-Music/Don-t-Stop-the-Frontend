@@ -1,6 +1,7 @@
 package com.dontstopthemusic.dontstopthemusic;
 
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 
@@ -30,18 +31,40 @@ public class StatusDeviceListFragment extends BaseDeviceListFragment
 		TextView deviceName = view.findViewById ( R.id.device_name );
 		TextView deviceAddress = view.findViewById ( R.id.device_address );
 		TextView deviceStatus = view.findViewById ( R.id.device_status );
+		ImageView deviceArrow = view.findViewById ( R.id.device_arrow );
+		TextView disconnectButton = view.findViewById ( R.id.disconnect_device );
 
+		/* Set the device name */
 		final String name = device.getInfo ().getName ();
 		if ( name != null && name.length () > 0 )
 			deviceName.setText ( name );
 		else
 			deviceName.setText ( R.string.unknown_device );
+
 		deviceAddress.setText ( device.getInfo ().getAddress () );
+		/* Set the address */
+
+		/* Set connection information */
 		if ( device.isConnected () )
-			deviceStatus.setText ( getString( R.string.bluetooth_connected ) );
+		{
+			deviceArrow.setVisibility ( View.VISIBLE );
+			disconnectButton.setVisibility ( View.VISIBLE );
+			deviceStatus.setText ( getString ( R.string.bluetooth_connected ) );
+		}
 		else if ( device.isConnecting () )
-			deviceStatus.setText ( getString( R.string.blutooth_connecting ) );
+		{
+			deviceArrow.setVisibility ( View.INVISIBLE );
+			disconnectButton.setVisibility ( View.INVISIBLE );
+			deviceStatus.setText ( getString ( R.string.blutooth_connecting ) );
+		}
 		else
-			deviceStatus.setText ( getString( R.string.bluetooth_disconnected ) );
+		{
+			deviceArrow.setVisibility ( View.INVISIBLE );
+			disconnectButton.setVisibility ( View.INVISIBLE );
+			deviceStatus.setText ( getString ( R.string.bluetooth_disconnected ) );
+		}
+
+		/* Set the onclick listener for disconnecting the device */
+		disconnectButton.setOnClickListener ( View -> device.close () );
 	}
 }

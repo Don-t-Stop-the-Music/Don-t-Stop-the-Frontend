@@ -38,5 +38,7 @@
     <string name="device_name">Device name</string>
     <string name="device_address">Device address</string>
     <string name="device_status">Device status</string>
+    <string name="open_device">Open Device</string>
+    <string name="disconnect_device">Disconnect</string>
 
 </resources>
