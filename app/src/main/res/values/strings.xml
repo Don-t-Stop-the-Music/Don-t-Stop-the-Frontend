@@ -2,31 +2,31 @@
     <string name="app_name">Don\'t Stop The Music</string>
     <string name="action_settings">Settings</string>
     <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label"> Debug feedback </string>
-    <string name="second_fragment_label"> Debug silence </string>
+    <string name="first_fragment_label"> Debug Feedback </string>
+    <string name="second_fragment_label"> Debug Silence </string>
     <string name="third_fragment_label"> Homepage</string>
-    <string name="fourth_fragment_label"> Debug hiss</string>
+    <string name="fourth_fragment_label"> Debug Hiss</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
 
-    <string name="RPi_connection">RPi connection page </string>
+    <string name="RPi_connection">RPi Connection Page </string>
     <string name="Homepage"> Homepage </string>
     <string name="Help_button"> Help </string>
 
     <string name="Testing"> TESTING </string>
 
-    <string name="Debug_feedback"> Debug feedback </string>
-    <string name="Debug_silence"> Debug silence </string>
-    <string name="Debug_hiss"> Debug hiss </string>
+    <string name="Debug_feedback"> Debug Feedback </string>
+    <string name="Debug_silence"> Debug Silence </string>
+    <string name="Debug_hiss"> Debug Hiss </string>
 
     <string name="hello_first_fragment">Hello first fragment</string>
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
     <string name="unknown_device">Unknown Device</string>
-    <string name="bluetooth_not_supported">Bluetooth not supported</string>
-    <string name="no_bluetooth_permissions">Bluetooth permissions not granted</string>
+    <string name="bluetooth_not_supported">Bluetooth not supported.</string>
+    <string name="no_bluetooth_permissions">Bluetooth permissions not granted.</string>
     <string name="current_device">Current Devices</string>
     <string name="other_devices">Other Devices</string>
-    <string name="enable_bluetooth">Please enable Bluetooth</string>
+    <string name="enable_bluetooth">Please enable Bluetooth.</string>
     <string name="bluetooth_connected">Connected</string>
     <string name="blutooth_connecting">Connecting</string>
     <string name="bluetooth_disconnected">Disconnected</string>
@@ -35,10 +35,10 @@
     <string name="blutooth_service_notification_message">Hello</string>
     <string name="bluetooth_service_notification_title">Accepting Connections</string>
     <string name="bluetooth_service_notification_contents">%1$d Devices Connected</string>
-    <string name="device_name">Device name</string>
-    <string name="device_address">Device address</string>
-    <string name="device_status">Device status</string>
-    <string name="open_device">Open Device</string>
-    <string name="disconnect_device">Disconnect</string>
+    <string name="device_name">Device Name</string>
+    <string name="device_address">Device Address</string>
+    <string name="device_status">Device Status</string>
+    <string name="monitor">Monitor</string>
+    <string name="stereo">Stereo</string>
 
 </resources>
