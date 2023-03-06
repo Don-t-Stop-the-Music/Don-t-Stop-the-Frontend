@@ -63,14 +63,23 @@ public class ThirdFragment extends Fragment {
                     JSONArray monitorArray;
                     JSONArray eqArrays;
                     JSONArray hissArray;
+                    JSONArray feedbackArray;
 
                     try {
 
                         eqArrays = data.getJSONArray("frequency");
                         hissArray = data.getJSONArray("hiss");
+                        feedbackArray = data.getJSONArray("feedback");
 
                         if (hissArray.getBoolean(0) || hissArray.getBoolean(1)) {
                             binding.buttonDebugHiss.setBackgroundColor(Color.RED);
+                        } else {
+                            binding.buttonDebugHiss.setBackgroundColor(Color.parseColor(buttonColor));
+                        }
+
+                        if (feedbackArray.getJSONArray(0).length() > 0 ||
+                                feedbackArray.getJSONArray(1).length() > 0) {
+                            binding.buttonDebugFeedback.setBackgroundColor(Color.RED);
                         } else {
                             binding.buttonDebugHiss.setBackgroundColor(Color.parseColor(buttonColor));
                         }
