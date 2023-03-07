@@ -237,6 +237,11 @@ public class BluetoothActivity extends AppCompatActivity
 				/* Start scanning */
 				mScanning = true;
 				mBluetoothAdapter.startDiscovery ();
+
+				/* Fade the button */
+				mScanButton.setText ( getString( R.string.scanning ) );
+				mScanButton.setClickable ( false );
+				mScanButton.setAlpha ( 0.5f );
 			}
 
 			else if ( !enable && mScanning )
@@ -244,6 +249,11 @@ public class BluetoothActivity extends AppCompatActivity
 				/* Stop scanning */
 				mScanning = false;
 				mBluetoothAdapter.cancelDiscovery ();
+
+				/* Show the button */
+				mScanButton.setText ( getString( R.string.scan ) );
+				mScanButton.setClickable ( true );
+				mScanButton.setAlpha ( 1 );
 			}
 	}
 
@@ -370,7 +380,7 @@ public class BluetoothActivity extends AppCompatActivity
 			/* Otherwise if the scan has ended */
 			else if ( BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals ( intent.getAction () ) )
 			{
-				mScanning = false;
+				scanForDevices ( false );
 			}
 		}
 
