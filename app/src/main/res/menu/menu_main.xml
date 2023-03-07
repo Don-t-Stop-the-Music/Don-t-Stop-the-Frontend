@@ -10,9 +10,4 @@
         app:showAsAction="ifRoom"/>
     <!-- item ID has to be same as fragment id in nav graph -->
 
-    <item
-        android:id="@+id/action_settings"
-        android:orderInCategory="100"
-        android:title="@string/action_settings"
-        app:showAsAction="never" />
 </menu>
