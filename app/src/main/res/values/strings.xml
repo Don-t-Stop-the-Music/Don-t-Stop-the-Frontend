@@ -42,5 +42,6 @@
     <string name="disconnect_device">Disconnect</string>
     <string name="monitor">Monitor</string>
     <string name="stereo">Stereo</string>
+    <string name="scanning">Scanning...</string>
 
 </resources>
