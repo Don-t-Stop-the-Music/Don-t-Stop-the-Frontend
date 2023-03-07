@@ -143,9 +143,6 @@ public class MainActivity extends AppCompatActivity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         switch(item.getItemId()){
-            case (R.id.action_settings): {
-                return true;
-            }
             case (R.id.HelpFragment): {
                 NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
                 return NavigationUI.onNavDestinationSelected(item,navController)

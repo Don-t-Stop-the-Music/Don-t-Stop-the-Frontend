@@ -87,15 +87,28 @@ public class ThirdFragment extends Fragment {
                         stereoArray = (JSONArray) eqArrays.get(0);
                         monitorArray = (JSONArray) eqArrays.get(1);
 
+                        boolean silent = true;
+
                         for (int i = 0; i < stereoArray.length(); ++i) {
                             Double u = stereoArray.getDouble(i);
                             stereoEntries.add(new Entry(i, u.floatValue()));
+
+                            if (u >= 0.1) {
+                                silent = false;
+                            }
                         }
 
                         for (int j = 0; j < monitorArray.length(); ++j) {
                             Double v = monitorArray.getDouble(j);
                             monitorEntries.add(new Entry(j, v.floatValue()));
                         }
+
+                        if (silent) {
+                            binding.buttonDebugSilence.setBackgroundColor(Color.RED);
+                        } else {
+                            binding.buttonDebugSilence.setBackgroundColor(Color.parseColor(buttonColor));
+                        }
+
 
                     } catch (JSONException e) {
                         throw new RuntimeException(e);
