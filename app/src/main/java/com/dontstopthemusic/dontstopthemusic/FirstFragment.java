@@ -26,7 +26,7 @@ public class FirstFragment extends Fragment {
 
     private FragmentFirstBinding binding;
 
-
+    //enum of states for readability
     enum FeedbackStates{
         ZERO_Init,
         ONE_PlugMonitorOut,
@@ -65,6 +65,7 @@ public class FirstFragment extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        //Alert dialog for later use in this fragment
         DialogInterface.OnClickListener dialogClickListener=new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
@@ -80,8 +81,11 @@ public class FirstFragment extends Fragment {
                 }
             }
         };
+        //the Next button
         binding.buttonfirst.setOnClickListener(new View.OnClickListener() {
+            //maintain local copy
             JSONObject localJson=MainActivity.getUpdatedJson();
+            //initialize builder so it can be used by different states
             AlertDialog.Builder builder=null;
 
             @Override
@@ -100,8 +104,9 @@ public class FirstFragment extends Fragment {
                 }
                 switch (current_state){
                     case ZERO_Init: {
+                        //The first button press
                         current_state=FeedbackStates.ONE_PlugMonitorOut;
-                        tv1.setText("Plug into monitor out");//"Plug into monitor out"
+                        tv1.setText("Plug into monitor out");
                         buttonFirst.setText("Next");
                         iv1.setImageResource(R.drawable.monitor_out);
                         break;
@@ -109,13 +114,15 @@ public class FirstFragment extends Fragment {
                     case ONE_PlugMonitorOut:{
                         current_state=FeedbackStates.TWO_HitPFL;
                         if (current_channel==0){
+                            //initialize
                             current_channel=1;
                         }
                         if (current_channel==6){
+                            //channel 5 and 6 share the same physical knobs
                             current_channel=7;
                         }
                         tv1.setText("Hit PFL on channel "+current_channel);
-                        variableValue="pfl_"+current_channel;
+                        variableValue="pfl_"+current_channel; //for choosing the right image depending on channel number
                         iv1.setImageResource(getResources().getIdentifier(variableValue,"drawable","com.dontstopthemusic.dontstopthemusic"));
                         break;
                     }
@@ -236,7 +243,7 @@ public class FirstFragment extends Fragment {
                             if (TEST_stereoFeedback.length() == 0) {
                                 //early exit option
                                 if (!(builder==null)){
-
+                                    //this prevents creating the dialog more than once in one debug feedback process
                                 }
                                 else {
                                     builder = new AlertDialog.Builder(view.getRootView().getContext());
@@ -268,11 +275,13 @@ public class FirstFragment extends Fragment {
                         }
                     }
                     case EIGHT_TurnDownMF:{
+                        //back to home page
                         NavHostFragment.findNavController(FirstFragment.this)
                                 .navigate(R.id.action_FirstFragment_to_ThirdFragment);
                         break;
                     }
                     default:
+                        //should never be here
                         tv1.setText("ERROR default");
                         break;
                 }

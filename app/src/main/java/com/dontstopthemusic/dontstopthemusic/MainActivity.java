@@ -29,6 +29,8 @@ public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
+
+    //for bluetooth connection
     private DeviceViewModel mDevice;
 
     private BluetoothService mBluetoothService;
@@ -38,6 +40,8 @@ public class MainActivity extends AppCompatActivity {
 
     private DeviceNewDataCallback mDeviceNewDataCallback=new DeviceNewDataCallback();
 
+    //The three debug flows share a copy of updated data that they can get on request - see below
+    //This is because they don't need updated data while *in* a state, that will only disturb user experience and be distracting
     private static JSONObject MostUpdatedJson;
 
     @Override
@@ -125,6 +129,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //get method for other fragments to get the most updated JSON without having edit access
     public static JSONObject getUpdatedJson(){
         return MostUpdatedJson;
     }
@@ -156,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onSupportNavigateUp() {
-
+        // This is the main reason why we chose navgraph over fragment manager
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         return NavigationUI.navigateUp(navController, appBarConfiguration)
                 || super.onSupportNavigateUp();

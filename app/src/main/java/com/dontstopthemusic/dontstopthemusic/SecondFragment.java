@@ -63,16 +63,19 @@ public class SecondFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         DialogInterface.OnClickListener dialogClickListener=new DialogInterface.OnClickListener() {
-
+            //for asking if user knows the problem channel
+            //modifies state and channel number
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 switch(i){
                     case DialogInterface.BUTTON_POSITIVE:{
+                        //user knows which channel might be problem
                         current_state=SilenceStates.FIVE_plugPFL;
                         current_channel=0; //"that"
                         break;
                     }
                     case DialogInterface.BUTTON_NEGATIVE:{
+                        //user does not know
                         current_state=SilenceStates.TEN_dontknow;
                         current_channel=1;
                         break;
@@ -85,6 +88,8 @@ public class SecondFragment extends Fragment {
             JSONObject localJson=MainActivity.getUpdatedJson();
             AlertDialog.Builder builder=null;
 
+            //function to check whether silence is detected
+            //returns 1 if silence is detected, 0 if no silence (there is input)
             int checkSilence(){
                 try {
                     TEST_stereoFreq=localJson.getJSONArray("frequency").getJSONArray(0);
@@ -105,6 +110,7 @@ public class SecondFragment extends Fragment {
                     return 0;
                 }
                 else{
+                    //ERROR: value should not be lower than zero
                     return -1;
                 }
             }
@@ -116,7 +122,12 @@ public class SecondFragment extends Fragment {
 
                 //get update-st copy of json
                 localJson=MainActivity.getUpdatedJson();
+
+                //redo silence check with update data
                 int no_sound=checkSilence();
+
+                //For telling users we can detect input
+                //We do not disrupt the debug process in case the user thinks it is still silent and want to continue
                 String done="(Note: we are detecting sound from the desk.) ";
 
                 switch (current_state){
@@ -176,7 +187,7 @@ public class SecondFragment extends Fragment {
                     }
                     case THREE_ST:{
                         if (!(builder==null)){
-
+                            //prevent duplicated builder
                         }
                         else{
                             builder = new AlertDialog.Builder(view.getRootView().getContext());
@@ -185,6 +196,7 @@ public class SecondFragment extends Fragment {
                             variableValue="soundboard";
                             iv2.setImageResource(getResources().getIdentifier(variableValue,"drawable","com.dontstopthemusic.dontstopthemusic"));
                             //current_state=SilenceStates.FOUR_whichchannel;
+                            //state is modified in alert dialog
                         }
                         break;
 
@@ -195,25 +207,31 @@ public class SecondFragment extends Fragment {
                     }
                     case FIVE_plugPFL:{
                         current_state=SilenceStates.SIX_gain;
-                        String text="channel "+current_channel;
+
                         variableValue="monitor_out";
+
+                        String text="channel "+current_channel;
                         if (current_channel==0){
                             text="the problem channel";
                         }
                         else if (current_channel==1){
                             variableValue="pfl_monitor_1";
                         }
+
                         String prep="Plug into monitor out.";
                         if (current_channel>1){
+                            //if we previously hit PFL for something else, monitor out is already plugged in
                             prep="Unhit PFL for channel "+(current_channel-1)+".";
                             if (current_channel==7){
                                 prep="Unhit PFL for channel "+5+".";
                             }
                             variableValue="pfl_"+current_channel;
                         }
+
                         if (no_sound==0){
                             prep=done+prep;
                         }
+
                         tv2.setText(prep+"Hit PFL for "+text+".");
                         iv2.setImageResource(getResources().getIdentifier(variableValue,"drawable","com.dontstopthemusic.dontstopthemusic"));
                         break;

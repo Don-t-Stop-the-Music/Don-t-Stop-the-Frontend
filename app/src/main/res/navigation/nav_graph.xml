@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
     app:startDestination="@id/ThirdFragment">
-
+<!--third fragment is home page-->
 
     <fragment
         android:id="@+id/FirstFragment"
@@ -53,5 +53,5 @@
         android:name="com.dontstopthemusic.dontstopthemusic.HelpFragment"
         android:label="@string/Help_button"
         tools:layout="@layout/fragment_help" />
-    <!--ID has to be same as item id-->
+    <!--ID has to be same as item id for help button to jump to the correct fragment-->
 </navigation>
