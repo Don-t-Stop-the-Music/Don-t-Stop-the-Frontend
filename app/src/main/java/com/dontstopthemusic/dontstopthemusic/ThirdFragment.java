@@ -30,11 +30,14 @@ import java.util.List;
 import java.util.Map;
 
 public class ThirdFragment extends Fragment {
-
+    //home page
     private FragmentThirdBinding binding;
+
+    //for bluetooth connection
     private DeviceViewModel tDevice;
     private DeviceNewDataCallback tDeviceNewDataCallback = new DeviceNewDataCallback();
 
+    //aesthetics
     private String buttonColor = "#0934B6";
 
     @Override
@@ -179,6 +182,7 @@ public class ThirdFragment extends Fragment {
             }
         }).start();
 
+        //navigation from homepage to the three debug flows
         binding.buttonDebugFeedback.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -204,11 +208,13 @@ public class ThirdFragment extends Fragment {
         });
     }
 
+    //android back button returns to bluetooth connection page instead of the (default behaviour) previous fragment
     OnBackPressedCallback callback = new OnBackPressedCallback(true /* enabled by default */) {
         @Override
         public void handleOnBackPressed() {
             // Handle the back button event
              requireActivity().finish();
+             //Returns to previous activity i.e. bluetooth connection
         }
     };
     @Override
