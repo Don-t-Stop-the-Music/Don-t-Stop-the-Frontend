@@ -66,7 +66,7 @@ public class FourthFragment extends Fragment {
                 else if (i == DialogInterface.BUTTON_NEGATIVE) {
                     currentState = HissStates.FOUR_TurnDownFader;
                     premature = true;
-                }
+                } // go to unhit PFL instruction if user does not want to continue
             }
         };
 
@@ -79,7 +79,7 @@ public class FourthFragment extends Fragment {
                 Button buttonFourth = (Button) view.getRootView().findViewById(R.id.button_fourth);
                 ImageView imageView = (ImageView) view.getRootView().findViewById(R.id.imageview_fourth);
 
-                localJSON = MainActivity.getUpdatedJson();
+                localJSON = MainActivity.getUpdatedJson(); // get updated values
 
                 try {
                     JSONArray hissArray = localJSON.getJSONArray("hiss");
@@ -100,7 +100,7 @@ public class FourthFragment extends Fragment {
                         break;
                     }
                     case ONE_HitPFL: {
-                        if (!TEST_hiss[1]) {
+                        if (!TEST_hiss[1]) { // if no hiss detected
                             currentState = HissStates.TWO_UnplugReplug;
                             variableValue = "outputs";
                             textView.setText(String.format("Unplug and replug channel %s input", channel));
@@ -116,12 +116,12 @@ public class FourthFragment extends Fragment {
                                         .setCancelable(false).show();
                             }
                         }
-                        else if (!TEST_hiss[0]) {
+                        else if (!TEST_hiss[0]) { // if no hiss detected in monitor
                             currentState = HissStates.FOUR_TurnDownFader;
                             variableValue = "soundboard";
                             textView.setText("This is not the correct channel. Proceed to next instruction.");
                         }
-                        else {
+                        else { // hiss detected in monitor and stereo
                             currentState = HissStates.TWO_UnplugReplug;
                             variableValue = "outputs";
                             textView.setText(String.format("Unplug and replug channel %s input", channel));
@@ -172,7 +172,7 @@ public class FourthFragment extends Fragment {
                         }
 
                         if (channel >= 7) {
-                            completed = true;
+                            completed = true; // all channels have been checked
                         }
 
                         textView.setText(String.format("Turn down the fader for channel %s", channel));
@@ -187,15 +187,15 @@ public class FourthFragment extends Fragment {
 
                         if (completed || premature) {
                             currentState = HissStates.FIVE_UnhitPFL;
-                        }
+                        } // early exit or all channels checked
                         else if (channel == 5) {
                             channel += 2;
                             currentState = HissStates.ZERO_Init;
-                        }
+                        } // pfl on channels 5 and 6 has the same effect
                         else {
                             channel += 1;
                             currentState = HissStates.ZERO_Init;
-                        }
+                        } // move on to next channel
 
                         variableValue = String.format("pfl_%s", oldChannel);
 
@@ -208,7 +208,7 @@ public class FourthFragment extends Fragment {
                     }
                     case FIVE_UnhitPFL: {
                         currentState = HissStates.SIX_Exit;
-                        if (TEST_hiss[1]) {
+                        if (TEST_hiss[1]) { // still detect hiss
                                 textView.setText("Unfortunately, there are no other options to solve " +
                                         "the issue via the soundboard. Please check the DI box.");
                         }
@@ -217,7 +217,7 @@ public class FourthFragment extends Fragment {
                                 textView.setText("We have gone through all of the options and no more hiss " +
                                         "is detected. If you still hear any hiss, check the DI box.");
                             }
-                            else {
+                            else { // user cancelled debug process
                                 textView.setText("Hiss was no longer detected during the debug process for " +
                                         "one of the channels. If you still hear any hiss, try again or " +
                                         "check the DI box.");
@@ -232,7 +232,7 @@ public class FourthFragment extends Fragment {
                     case SIX_Exit: {
                         NavHostFragment.findNavController(FourthFragment.this)
                                 .navigate(R.id.action_FourthFragment_to_ThirdFragment);
-                        break;
+                        break; // return to homepage
                     }
                     default:
                         textView.setText("ERROR default");

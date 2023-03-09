@@ -56,6 +56,7 @@ public class ThirdFragment extends Fragment {
             try {
                 LineChart stereoChart = getView().findViewById(R.id.chart_stereo);
                 LineChart monitorChart = getView().findViewById(R.id.chart_monitor);
+                // get charts from xml
 
                 Map<LineChart, LineData> charts = new HashMap<>();
 
@@ -79,14 +80,14 @@ public class ThirdFragment extends Fragment {
                             binding.buttonDebugHiss.setBackgroundColor(Color.RED);
                         } else {
                             binding.buttonDebugHiss.setBackgroundColor(Color.parseColor(buttonColor));
-                        }
+                        } // hiss button turns red if at least one hiss value is true
 
                         if (feedbackArray.getJSONArray(0).length() > 0 ||
                                 feedbackArray.getJSONArray(1).length() > 0) {
                             binding.buttonDebugFeedback.setBackgroundColor(Color.RED);
                         } else {
                             binding.buttonDebugFeedback.setBackgroundColor(Color.parseColor(buttonColor));
-                        }
+                        } // feedback button turns red if feedback array is empty
 
                         stereoArray = (JSONArray) eqArrays.get(0);
                         monitorArray = (JSONArray) eqArrays.get(1);
@@ -98,20 +99,20 @@ public class ThirdFragment extends Fragment {
                             stereoEntries.add(new Entry(i, u.floatValue()));
 
                             if (u >= 0.1) {
-                                silent = false;
+                                silent = false; // check for at least one frequency entry
                             }
                         }
 
                         for (int j = 0; j < monitorArray.length(); ++j) {
                             Double v = monitorArray.getDouble(j);
                             monitorEntries.add(new Entry(j, v.floatValue()));
-                        }
+                        } // chart entries
 
                         if (silent) {
                             binding.buttonDebugSilence.setBackgroundColor(Color.RED);
                         } else {
                             binding.buttonDebugSilence.setBackgroundColor(Color.parseColor(buttonColor));
-                        }
+                        } // silence button turns red if frequency array is empty
 
 
                     } catch (JSONException e) {
@@ -149,14 +150,15 @@ public class ThirdFragment extends Fragment {
                         c.getAxisLeft().setDrawAxisLine(false);
                         c.getAxisRight().setDrawGridLines(false);
                         c.getAxisRight().setDrawLabels(false);
-                        c.getAxisRight().setDrawAxisLine(false);
+                        c.getAxisRight().setDrawAxisLine(false); // remove borders and grid lines
 
                         c.getAxisLeft ().setAxisMaxValue ( 6 );
                         c.getAxisRight ().setAxisMaxValue ( 6 );
+                        // stops the maximum y-axis value from being calculated automatically
 
                         c.getDescription().setEnabled(false);
                         c.getLegend().setEnabled(false);
-                        c.invalidate();
+                        c.invalidate(); // redraw charts
                     }
                 });
             } catch (NullPointerException ignore) {}
@@ -178,7 +180,7 @@ public class ThirdFragment extends Fragment {
                         return;
                     }
                     Thread.yield ();
-                }
+                } // register callback when device is connected
             }
         }).start();
 
